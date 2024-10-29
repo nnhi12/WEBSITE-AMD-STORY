@@ -1,7 +1,33 @@
 import React from 'react';
+import { useState, useEffect } from 'react'
+import axios from 'axios';
+
 import './Register.css';
 
 function Register() {
+  const[createForm, setCreateForm] = useState({
+    username:"",
+    body: ""
+  })
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCreateForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("http://localhost:3001/register", createForm);
+      console.log('Account created:', response.data);
+      // Add any post-registration logic here, like redirecting to the login page
+    } catch (error) {
+      console.error('Error registering account:', error);
+    }
+  };
+
   return (
     <div className= "body-regis">
     <div className="signup-container">
@@ -14,10 +40,10 @@ function Register() {
           />
         </div>
         <div className="regis-form-section">
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="regis-form-group">
               <label>USER NAME</label>
-              <input type="text" placeholder="" />
+              <input type="text" name = "username" value = {createForm.body.username} onChange={handleChange} required/>
             </div>
             <div className="regis-form-group">
               <label>EMAIL</label>
@@ -25,7 +51,7 @@ function Register() {
             </div>
             <div className="regis-form-group">
               <label>PASSWORD</label>
-              <input type="password" placeholder="" />
+              <input type="password" name="password" value = {createForm.body.password} onChange={handleChange} required/>
             </div>
             <div className="regis-form-group">
               <label>CONFIRM PASSWORD</label>
