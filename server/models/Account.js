@@ -5,8 +5,8 @@ const accountSchema = new mongoose.Schema({
     password: String,
     role: String,
     status: Boolean
-}
-)
+}, { versionKey: false }
+);
 
 const accountModel = mongoose.model("Account", accountSchema)
 module.exports = accountModel
