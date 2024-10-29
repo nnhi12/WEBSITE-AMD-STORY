@@ -1,0 +1,37 @@
+.u-book-image {
+    width: 200px;   /* Set the width */
+    height: 250px;  /* Set the height to make it a square */
+    object-fit: cover; /* Crop the image to fill the square without distortion */
+    border-radius: 8px; /* Optional: Rounded corners */
+  }
+  
+  .u-book-title {
+    font-size: 0.9em;
+    color: #333;
+    margin-top: 8px;
+  }
+
+  .u-text-decoration-none {
+    text-decoration: none;
+  }
+  .u-text-dark {
+    color: black;
+  }
+  .u-text-dark:hover {
+    color: #333; 
+  }
+
+  .fav-chapter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9rem;
+    color: #555;
+  }
+  .fav-chapter-list a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  .fav-chapter-list a:hover {
+    text-decoration: underline;
+  }

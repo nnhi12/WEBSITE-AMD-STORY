@@ -1,0 +1,19 @@
+.u-chapter-list {
+  margin: 20px 0;
+}
+
+.u-chapter-list h3 {
+  font-size: 1.5rem;
+  color: #9d0a0a;
+  border-bottom: 2px solid #9d0a0a;
+}
+
+.u-chapter-item {
+  font-size: 1.1rem;
+  margin: 10px 0;
+}
+
+.u-chapter-list a {
+  text-decoration: none;
+  color: black; /* giữ màu sắc hoặc thay đổi theo ý muốn */
+}

@@ -1,0 +1,77 @@
+.login-body {
+    margin: 0;
+    padding: 0;
+    width:100vw;
+    height: 100vh;
+    background-image: url('https://wallpapers.com/images/hd/one-piece-zoro-manga-bm23qxb4xo77mf44.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* Thêm để tạo bối cảnh cho lớp phủ */
+}
+
+.body-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Màu tối với độ trong suốt 50% */
+    z-index: 1; /* Đặt lớp phủ lên trên hình nền */
+}
+
+.login-container {
+    background: #d9534f;
+    padding: 30px; /* Tăng padding để có thêm không gian bên trong */
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5); /* Tăng độ mờ của bóng */
+    width: 400px; /* Tăng chiều rộng */
+    height: 350px; /* Tăng chiều cao */
+    position: relative;
+    z-index: 2; /* Đặt login-container lên trên lớp phủ */
+}
+
+.login-container h2 {
+    text-align: center;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #e19494;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top:20px;
+}
+
+.login-container button:hover {
+    background-color: #f4cccc;
+}
+
+.sign-up-text {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #f4cccc;
+  }
+  
+  .sign-up-text a {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+  
+  .sign-up-text a:hover {
+    color: #ffffff;
+  }

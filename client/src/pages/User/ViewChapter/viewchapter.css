@@ -1,0 +1,60 @@
+/* Căn chỉnh container */
+.main-chapter-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.chapter-content .chapter-post-date {
+  font-size: 16px;
+  margin-left: 10px;
+  margin-top:10px;
+  color: #888;
+  text-align: left; /* Aligns "Posted at" to the left */
+}
+
+.chapter-content .chapter-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #900;
+  text-align: center;
+}
+
+.chapter-content .chapter-now {
+  font-size: 22px;
+  color: #600;
+  text-align: center;
+}
+
+.chapter-content-text {
+  text-align: justify;
+  font-size: 22px;
+  line-height: 3.2;
+  color: #333;
+  margin: 1% 11% 1% 11%;
+}
+
+.chapter-select-buttons {
+  display: flex;
+  justify-content: center; /* Center buttons */
+  gap: 10px; /* Adjust the space between buttons */
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.chapter-select-buttons .chapter-btn {
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  padding: 10px 20px;
+}
+
+.chapter-select-buttons .chapter-btn-primary {
+  background-color: #900;
+  border: none;
+}
+
+.chapter-select-buttons .chapter-btn-secondary {
+  background-color: #600;
+  border: none;
+}
