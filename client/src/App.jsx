@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios';
 import HomePage from './pages/User/HomePage/HomePage'
 import StoryInfo from './pages/User/StoryInformation/StoryInforPage'
 import ChapterView from './pages/User/ViewChapter/viewchapter'
@@ -14,7 +15,20 @@ import SearchPage from './pages/User/SearchResult/SearchResult'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 function App() {
   const [count, setCount] = useState(0)
+  const [account, setAccounts] = useState(null);
+  
 
+  useEffect(()=> {
+     fetchAccounts();
+  }, [])
+  const fetchAccounts = async () => {
+      const res = await axios.get("http://localhost:3001/");
+      setAccounts(res.data.account);
+  }
+
+  const createAccount = (e) => {
+    e.preventDefault();
+  }
   return (
     <div>
         <BrowserRouter>
