@@ -69,7 +69,7 @@ app.post("/register", async (req, res)=> {
 }
 ) 
 
-app.get("/books", async (req, res)=> {
+app.get("/stories", async (req, res)=> {
     try {
         const stories = await storyModel.find();
 
@@ -83,6 +83,23 @@ app.get("/books", async (req, res)=> {
     } catch (error) {
         console.error('Error fetching stories:', error);
         res.status(500).send('Error fetching stories');
+    }
+}
+)
+
+app.get("/searchstory", async (req, res)=> {
+    const query = req.query.name; // Lấy từ khóa tìm kiếm từ query string
+
+    try {
+        // Tìm kiếm các truyện có tên chứa từ khóa tìm kiếm, không phân biệt chữ hoa, chữ thường
+        const stories = await storyModel.find({
+            name: { $regex: query, $options: 'i' }
+        });
+
+        res.json(stories);
+    } catch (error) {
+        console.error('Error searching stories:', error);
+        res.status(500).send('Error searching stories');
     }
 }
 ) 

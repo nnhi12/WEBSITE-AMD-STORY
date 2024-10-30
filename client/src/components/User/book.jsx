@@ -6,7 +6,7 @@ class Book extends Component {
     render() {
         const { data } = this.props;
         const { showChapters } = this.props;
-
+        console.log('Book data:', data);
         // Kiểm tra nếu có dữ liệu ảnh Base64
         const imageSrc = data.image ? `data:image/jpeg;base64,${data.image}` : '';
 

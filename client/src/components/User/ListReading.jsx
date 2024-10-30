@@ -7,8 +7,9 @@ const ListReading = ({ showChapters }) => {
 
     useEffect(() => {
         // Sử dụng axios để fetch dữ liệu từ API
-        axios.get("http://localhost:3001/books")
+        axios.get("http://localhost:3001/stories")
             .then(response => {
+                console.log('Fetched books:', response.data);
                 setBooks(response.data);
             })
             .catch(error => {
