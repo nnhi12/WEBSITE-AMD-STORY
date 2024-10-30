@@ -1,7 +1,8 @@
 const express = require('express');
 const connectDB = require('./utils/connect.js');
 const cors = require('cors');
-const testModel = require('./models/Test.js')
+const testModel = require('./models/Test.js');
+const storyModel = require('./models/Story.js')
 
 const accountModel = require('./models/Account.js');
 const { redirect } = require('react-router-dom');
@@ -33,7 +34,7 @@ app.get('/', async (req, res) => {
     }
 });
 
-app.get("/login", async (req, res)=> {
+app.post("/login", async (req, res)=> {
     //get username of account
     const username = req.body.username;
     const password = req.body.password;
@@ -65,6 +66,13 @@ app.post("/register", async (req, res)=> {
     });
 
     res.json({account: account})
+}
+) 
+
+app.get("/books", async (req, res)=> {
+    const books = await storyModel.find()
+
+    res.json({books: books})
 }
 ) 
 
