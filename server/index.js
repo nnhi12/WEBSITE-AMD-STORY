@@ -6,6 +6,7 @@ const storyModel = require('./models/Story.js')
 
 const accountModel = require('./models/Account.js');
 const { redirect } = require('react-router-dom');
+const userModel = require('./models/User.js');
 
 const app = express();
 
@@ -52,22 +53,37 @@ app.post("/login", async (req, res)=> {
 }
 ) 
 
-app.post("/register", async (req, res)=> {
-    //get the sent in data
-    const username = req.body.username
-    const password = req.body.password
+app.post("/register", async (req, res) => {
+    try {
+        const { username, password, email } = req.body;
 
-    // create a user
-    const account = await accountModel.create({
-        username: username,
-        password: password,
-        role: 'user',
-        status: true,
-    });
+        // Kiểm tra xem username đã tồn tại chưa
+        const existingAccount = await accountModel.findOne({ username });
+        if (existingAccount) {
+            return res.status(400).json({ message: "Username already exists. Please choose a different username." });
+        }
 
-    res.json({account: account})
-}
-) 
+        // Nếu username chưa tồn tại, tiến hành tạo tài khoản và user mới
+        const account = await accountModel.create({
+            username,
+            password,
+            role: 'user',
+            status: true,
+        });
+
+        const user = await userModel.create({
+            account: account._id,
+            fullname: "",
+            email,
+        });
+
+        res.json({ account, user });
+    } catch (error) {
+        console.error("Error during registration:", error);
+        res.status(500).json({ message: "An error occurred during registration. Please try again later." });
+    }
+});
+
 
 app.get("/stories", async (req, res)=> {
     try {
