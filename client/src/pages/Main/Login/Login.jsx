@@ -10,7 +10,8 @@ function Login() {
     const[createForm, setCreateForm] = useState({
         username:"",
         password:""
-      })
+      });
+      const [errorMessage, setErrorMessage] = useState("");
       const handleChange = (e) => {
         const { name, value } = e.target;
         setCreateForm((prevForm) => ({
@@ -24,19 +25,20 @@ function Login() {
         try {
           const response = await axios.post("http://localhost:3001/login", createForm);
           const data = response.data;
+          
           console.log(data);
           if (data !== null)
           {
             
-            console.log('Login success');
+            setErrorMessage("Login success!");
             history("/");
           }
           else
           {
-            console.log('Login Failed');
+            setErrorMessage("Username or password is incorrect");
           }
         } catch (error) {
-          console.error('Error login account:', error);
+          setErrorMessage("Username or password is incorrect");
         }
       };
     
@@ -50,6 +52,7 @@ function Login() {
                     <input type="password" placeholder="Mật khẩu" name="password" value = {createForm.password} onChange={handleChange} required />
                     <button type="submit">Đăng Nhập</button>
                 </form>
+                {errorMessage && <p className="error-message">{errorMessage}</p>}
                 <p className="sign-up-text">
                     Haven't had an account yet? <a href="/register">Sign up now!</a>
                 </p>
