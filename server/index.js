@@ -70,9 +70,20 @@ app.post("/register", async (req, res)=> {
 ) 
 
 app.get("/books", async (req, res)=> {
-    const books = await storyModel.find()
+    try {
+        const stories = await storyModel.find();
 
-    res.json({books: books})
+        // Chuyển đổi Buffer hình ảnh sang Base64
+        const modifiedStories = stories.map(story => ({
+            ...story._doc,
+            image: story.image ? story.image.toString('base64') : null,
+        }));
+
+        res.json(modifiedStories);
+    } catch (error) {
+        console.error('Error fetching stories:', error);
+        res.status(500).send('Error fetching stories');
+    }
 }
 ) 
 
