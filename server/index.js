@@ -35,23 +35,35 @@ app.get('/', async (req, res) => {
     }
 });
 
-app.post("/login", async (req, res)=> {
-    //get username of account
-    const username = req.body.username;
-    const password = req.body.password;
+app.post("/login", async (req, res) => {
+    // Lấy tên đăng nhập và mật khẩu từ yêu cầu
+    const { username, password } = req.body;
 
-    //find account using this username
-    const account = await accountModel.findOne({username: username, password:password})
+    try {
+        // Tìm tài khoản bằng tên đăng nhập và mật khẩu
+        const account = await accountModel.findOne({ username: username, password: password });
 
-    //respond
-    if (!account) {
-        return res.status(400).json({ message: "Invalid username or password" });
+        // Nếu không tìm thấy tài khoản, trả về lỗi
+        if (!account) {
+            return res.status(400).json({ message: "Invalid username or password" });
+        }
+
+        // Tìm thông tin người dùng dựa trên ID tài khoản
+        const user = await userModel.findOne({ account: account._id });
+
+        // Nếu không tìm thấy người dùng, trả về lỗi (nếu cần)
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Đăng nhập thành công, trả về thông tin tài khoản và người dùng
+        res.json({ account: account, user: user });
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).json({ message: "An error occurred during login. Please try again later." });
     }
+});
 
-    // Đăng nhập thành công, trả về thông tin tài khoản
-    res.json({ account: account });
-}
-) 
 
 app.post("/register", async (req, res) => {
     try {
