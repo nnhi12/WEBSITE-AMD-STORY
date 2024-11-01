@@ -12,6 +12,7 @@ import TopHot from './pages/User/TopHotStory/TopHotStory'
 import FavouriteStory from './pages/User/FavouriteStory/FavouriteStory'
 import AboutUs from './pages/User/AboutUs/AboutUsPage'
 import SearchPage from './pages/User/SearchResult/SearchResult'
+import UserInfo from './pages/User/UserInformation/UserInformationPage'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 function App() {
   const [count, setCount] = useState(0)
@@ -45,6 +46,7 @@ function App() {
             <Route path = '/favpage' element = {<FavouriteStory />}> </Route>
             <Route path = '/aboutus' element = {<AboutUs />}> </Route>
             <Route path = '/searchresult' element = {<SearchPage />}> </Route>
+            <Route path = '/userinfo' element = {<UserInfo />}> </Route>
           </Routes>
         </BrowserRouter>
     </div>

@@ -95,6 +95,34 @@
     border-radius: 10px; /* Bo góc cho nút ABC */
     font-size: 20px;
     cursor: pointer;
+    position: relative;
   }
   
+  .a-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 100;
+  }
   
+  .a-dropdown-menu a,
+  .a-dropdown-menu button {
+    display: block;
+    padding: 8px 12px;
+    color: black;
+    text-decoration: none;
+    background: none;
+    border: 1px gray;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .a-dropdown-menu a:hover,
+  .a-dropdown-menu button:hover {
+    background-color: #f1f1f1;
+  }
