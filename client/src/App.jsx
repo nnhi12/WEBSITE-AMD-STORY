@@ -16,20 +16,7 @@ import UserInfo from './pages/User/UserInformation/UserInformationPage'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 function App() {
   const [count, setCount] = useState(0)
-  const [account, setAccounts] = useState(null);
   
-
-  useEffect(()=> {
-     fetchAccounts();
-  }, [])
-  const fetchAccounts = async () => {
-      const res = await axios.get("http://localhost:3001/");
-      setAccounts(res.data.account);
-  }
-
-  const createAccount = (e) => {
-    e.preventDefault();
-  }
   return (
     <div>
         <BrowserRouter>
@@ -37,10 +24,10 @@ function App() {
             <Route path = '/register' element = {<SignUp />}> </Route>
             <Route path = '/login' element = {<LogIn />}> </Route>
             <Route path = '/' element = {<HomePage />}> </Route>
-            <Route path = '/storyinfo' element = {<StoryInfo />}> </Route>
-            <Route path = '/viewchapter' element = {<ChapterView />}> </Route>
+            <Route path = '//storyinfo/:storyId' element = {<StoryInfo />}> </Route>
+            <Route path = '/viewchapter/:chapterID' element = {<ChapterView />}> </Route>
             <Route path = '/library' element = {<ListReading />}> </Route>
-            <Route path = '/classifiedbygenre' element = {<ClassifiedByGenre />}> </Route>
+            <Route path="/classifiedbygenre/:categoryId" element={<ClassifiedByGenre />}>  </Route>
             <Route path = '/classifiedbychapter' element = {<ClassifiedByChapter />}> </Route>
             <Route path = '/tophot' element = {<TopHot />}> </Route>
             <Route path = '/favpage' element = {<FavouriteStory />}> </Route>

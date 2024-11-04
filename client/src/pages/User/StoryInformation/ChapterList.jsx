@@ -1,26 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useParams } from 'react-router-dom';
 import './ChapterList.css';
 
-const chapters = [
-  'Chương 1: Chuyện về nàng Lọ lem',
-  'Chương 2: Món quà của bà tiên',
-  'Chương 3: Đêm vũ hội',
-  'Chương 4: Âm mưu của dì ghẻ',
-  'Chương 5: Phần kết thúc',
-];
-
 const ChapterList = () => {
+  const { storyId } = useParams();
+  const [chapters, setChapters] = useState([]);
+
+  useEffect(() => {
+    axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
+      .then(response => {
+        setChapters(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching chapters:', error);
+      });
+  }, [storyId]);
+
   return (
     <section className="u-chapter-list">
-        <h3>Chapter List</h3>
-        <ul>
-          {chapters.map((chapter, index) => (
-            <li key={index} className="u-chapter-item">
-              <a href = "/viewchapter">★ {chapter}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <h3>Chapter List</h3>
+      <ul>
+        {chapters.map((chapter, index) => (
+          <li key={index} className="u-chapter-item">
+            <a href={`/viewchapter/${chapter._id}`}>★ {chapter.name}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 };
 
