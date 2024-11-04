@@ -3,7 +3,7 @@ import './header.css';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const Header = () => {
+const Header = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false); // Trạng thái cho combobox
@@ -17,13 +17,17 @@ const Header = () => {
   }, []);
 
   const handleSearch = async () => {
-      try {
-          const response = await axios.get(`http://localhost:3001/searchstory?name=${searchTerm}`);
-          const results = response.data;
-          navigate("/searchresult", { state: { searchResults: results } });
-      } catch (error) {
-          console.error('Error searching stories:', error);
-      }
+    if (typeof onSearch === 'function') {
+      onSearch(searchTerm);
+    }
+    try {
+        const response = await axios.get(`http://localhost:3001/searchstory?name=${searchTerm}`);
+        const results = response.data;
+        console.log('Search Results:', results);
+        navigate("/searchresult", { state: { searchResults: results } });
+    } catch (error) {
+        console.error('Error searching stories:', error);
+    }
   };
 
   const toggleDropdown = () => {

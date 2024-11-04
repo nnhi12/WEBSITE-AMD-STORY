@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     email: String,
     comments: { type: [String], default: [] },
     story_reading: { type: [String], default: [] },
-    story_following: { type: [String], default: [] }
+    story_following: { type: [mongoose.Schema.Types.ObjectId], ref: 'Story' }
 }, { versionKey: false }
 );
 

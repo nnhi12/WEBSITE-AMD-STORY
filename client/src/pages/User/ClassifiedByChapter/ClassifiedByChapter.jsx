@@ -3,11 +3,11 @@ import Header from '../../../layouts/header/User/header.jsx';
 import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
 import ListStory from '../../../components/User/ListReading.jsx';
-import HottestSection from '../../../components/User/HottestSection.jsx';
+import ListGenre from '../../../components/User/ListGenre.jsx';
 import '../../../components/User/homepage.css';
 
 
-const ClassifiedByChapter = () => (
+const TopHotStory = () => (
   <div className="u-main-page">
     <Header />
     <Navbar />
@@ -17,13 +17,12 @@ const ClassifiedByChapter = () => (
             <ListStory />
           </div>
           <div className="second-section-container" style={{ marginBottom: "10px" }}>
-            <HottestSection />
+            <ListGenre />
           </div>
         </div>
-        
       </div>
     <Footer />
   </div>
 );
 
-export default ClassifiedByChapter;
+export default TopHotStory;
