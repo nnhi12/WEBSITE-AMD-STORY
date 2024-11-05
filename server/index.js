@@ -176,23 +176,39 @@ app.get('/stories/:storyId/chapters', async (req, res) => {
 
 app.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
     try {
-        const id = req.params.chapterId;
-        const chapter = await chapterModel.findById(id);
+        // Tìm câu chuyện theo storyId
+        const story = await storyModel.findById(req.params.storyId).populate('chapters');
+        if (!story) {
+            console.error('Story not found:', req.params.storyId);
+            return res.status(404).send('Story not found');
+        }
+
+        // Kiểm tra nếu chapters là một mảng và tìm chapter
+        const chapter = story.chapters.find(chap => chap._id.toString() === req.params.chapterId);
         if (!chapter) {
+            console.error('Chapter not found:', req.params.chapterId);
             return res.status(404).send('Chapter not found');
         }
 
-        //const story = await storyModel.findOne({ chapters: chapter._id }).populate('chapters');
-        //const chapterIndex = story.chapters.findIndex(chap => chap._id.toString() === chapter._id.toString());
-        //const previousId = chapterIndex > 0 ? story.chapters[chapterIndex - 1]._id : null;
-        //const nextId = chapterIndex < story.chapters.length - 1 ? story.chapters[chapterIndex + 1]._id : null;
-        console.log (chapter._id);
-        res.json(chapter);
+        // Tìm vị trí của chapter trong mảng
+        const chapterIndex = story.chapters.findIndex(chap => chap._id.toString() === req.params.chapterId);
+
+        // Lấy chương trước và sau
+        const previousChapter = chapterIndex > 0 ? story.chapters[chapterIndex - 1] : null;
+        const nextChapter = chapterIndex < story.chapters.length - 1 ? story.chapters[chapterIndex + 1] : null;
+
+        console.log('Found chapter:', chapter);
+        res.json({
+            chapter,
+            previousId: previousChapter ? previousChapter._id : null,
+            nextId: nextChapter ? nextChapter._id : null,
+        });
     } catch (err) {
-        console.error('Error fetching chapter:', err.message);
+        console.error('Error fetching chapter:', err);
         res.status(500).send('Server error');
     }
 });
+
 
 app.get("/userinfo/:accountId", async (req, res) => {
     const accountId = req.params.accountId;

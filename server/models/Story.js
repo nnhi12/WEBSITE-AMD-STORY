@@ -4,7 +4,6 @@ const storySchema = new mongoose.Schema({
     name: String,
     description: String,
     view: Number,
-    authors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Author' }],
     status: Boolean,
     image: Buffer,
     created_at: { type : Date, default: Date.now },
