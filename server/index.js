@@ -1,6 +1,7 @@
 const express = require('express');
 const connectDB = require('./utils/connect.js');
 const cors = require('cors');
+const multer = require("multer");
 const testModel = require('./models/Test.js');
 const storyModel = require('./models/Story.js')
 
@@ -14,6 +15,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+const upload = multer();
 
 connectDB();
 
@@ -171,21 +173,26 @@ app.get('/stories/:storyId/chapters', async (req, res) => {
     }
 });
 
-//   app.get('/stories/:storyId/authors', async (req, res) => {
-//     try {
-//       const story = await storyModel.findById(req.params.storyId).populate('authors');
-//       if (!story) {
-//         console.error('Story not found:', req.params.storyId);
-//         return res.status(404).send('Story not found');
-//       }
-//       console.log('Found story:', story);
-//       res.json(story.authors);  // Correct field to return
-//     } catch (err) {
-//       console.error('Error fetching authors:', err.message);  // Log specific error message
-//       res.status(500).send('Server error');
-//     }
-//   });
 
+app.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
+    try {
+        const id = req.params.chapterId;
+        const chapter = await chapterModel.findById(id);
+        if (!chapter) {
+            return res.status(404).send('Chapter not found');
+        }
+
+        //const story = await storyModel.findOne({ chapters: chapter._id }).populate('chapters');
+        //const chapterIndex = story.chapters.findIndex(chap => chap._id.toString() === chapter._id.toString());
+        //const previousId = chapterIndex > 0 ? story.chapters[chapterIndex - 1]._id : null;
+        //const nextId = chapterIndex < story.chapters.length - 1 ? story.chapters[chapterIndex + 1]._id : null;
+        console.log (chapter._id);
+        res.json(chapter);
+    } catch (err) {
+        console.error('Error fetching chapter:', err.message);
+        res.status(500).send('Server error');
+    }
+});
 
 app.get("/userinfo/:accountId", async (req, res) => {
     const accountId = req.params.accountId;
@@ -215,10 +222,11 @@ app.get("/userinfo/:accountId", async (req, res) => {
 });
 
 
-app.put("/userinfo/:accountId", async (req, res) => {
+
+app.put("/userinfo/:accountId", upload.single("image"), async (req, res) => {
     const accountId = req.params.accountId;
     const { fullname, email, password, age } = req.body;
-    const image = req.file ? req.file.buffer : undefined; // Để ý phần upload ảnh
+    const image = req.file ? req.file.buffer : undefined; // Lưu trực tiếp dưới dạng Buffer
 
     try {
         const account = await accountModel.findById(accountId);
@@ -228,11 +236,18 @@ app.put("/userinfo/:accountId", async (req, res) => {
 
         const user = await userModel.findOneAndUpdate(
             { account: accountId },
-            { fullname, email, password, age, image },
+            { fullname, email, password, age, image }, // Lưu Buffer vào cơ sở dữ liệu
             { new: true }
         );
 
-        res.json({ message: "User information updated successfully" });
+        if (user) {
+            res.json({
+                message: "User information updated successfully",
+                data: user,
+            });
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
     } catch (error) {
         console.error("Error updating user info:", error);
         res.status(500).json({ message: "An error occurred updating user info." });
@@ -249,40 +264,7 @@ app.get('/categories', async (req, res) => {
 });
 
 //chapter
-app.get('/chapters/:chapterId', async (req, res) => {
-    try {
-        const chapter = await chapterModel.findById(req.params.chapterId);
-        if (!chapter) {
-            console.error('Chapter not found:', req.params.chapterId);
-            return res.status(404).send('Chapter not found');
-        }
 
-        const story = await storyModel.findOne({ chapters: chapter._id }).populate('chapters');
-        if (!story) {
-            console.error('Story not found for chapter:', req.params.chapterId);
-            return res.status(404).send('Story not found');
-        }
-
-        const chapterIndex = story.chapters.findIndex(chap => chap._id.toString() === chapter._id.toString());
-        if (chapterIndex === -1) {
-            console.error('Chapter index not found in story:', req.params.chapterId);
-            return res.status(404).send('Chapter index not found');
-        }
-
-        const previousId = chapterIndex > 0 ? story.chapters[chapterIndex - 1]._id : null;
-        const nextId = chapterIndex < story.chapters.length - 1 ? story.chapters[chapterIndex + 1]._id : null;
-
-        res.json({
-            ...chapter._doc,
-            storyName: story.name,
-            previousId,
-            nextId,
-        });
-    } catch (err) {
-        console.error('Error fetching chapter:', err.message);
-        res.status(500).send(`Server error: ${err.message}`);
-    }
-});
 
 
 //the loai
@@ -304,24 +286,32 @@ app.get('/categories/:categoryId/stories', async (req, res) => {
 
 
 //
-app.get('/users/:userId/following-stories', async (req, res) => {
+app.get('/users/:accountId/followingstories', async (req, res) => {
     try {
-      console.log(`Fetching followed stories for user: ${req.params.userId}`); // Log user ID
-      const user = await userModel.findById(req.params.userId).populate('story_following');
-      if (!user) {
-        console.error('User not found for userId:', req.params.userId);
-        return res.status(404).send('User not found');
-      }
-      console.log('User found:', user);
-      const followedStories = await storyModel.find({ _id: { $in: user.story_following } });
-      console.log('Followed stories found:', followedStories);
-      res.json(followedStories);
+        const accountId = req.params.accountId;
+        const account = await accountModel.findById(accountId);
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+        const user = await userModel.findOne({ account: accountId }).populate('story_following');
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        console.log('User found:', user);
+        const followedStories = await storyModel.find({ _id: { $in: user.story_following } });
+        console.log('Followed stories found:', followedStories);
+        const modifiedStories = followedStories.map(story => ({
+            ...story._doc,
+            image: story.image ? story.image.toString('base64') : null,
+        }));
+
+        res.json(modifiedStories);
     } catch (err) {
-      console.error('Error fetching followed stories:', err.message);
-      res.status(500).send(`Server error: ${err.message}`);
+        console.error('Error fetching followed stories:', err.message);
+        res.status(500).send(`Server error: ${err.message}`);
     }
-  });
-  
+});
+
 
 app.listen(3001, () => {
     console.log('Success!');

@@ -8,11 +8,12 @@ function UserInfo() {
         password: "",
         email: "",
         fullname: "",
+        age: "", // Thêm age vào state
         image: null,
     });
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [file, setFile] = useState(null); // State to hold the file
+    const [file, setFile] = useState(null); // State để lưu file
 
     useEffect(() => {
         const fetchUserInfo = async () => {
@@ -58,12 +59,11 @@ function UserInfo() {
             console.error("Lỗi khi cập nhật thông tin người dùng:", error);
         }
     };
-    
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
-            setFile(selectedFile); // Store the selected file in state
+            setFile(selectedFile); // Lưu file được chọn vào state
             const reader = new FileReader();
             reader.onloadend = () => {
                 setUserInfo({ ...userInfo, image: reader.result }); // Lưu ảnh vào state để hiển thị
@@ -82,7 +82,7 @@ function UserInfo() {
             <div className="row">
                 <div className="col-6">
                     <div className="profile-img">
-                    <input
+                        <input
                             type="file"
                             accept="image/*"
                             onChange={handleFileChange}
@@ -91,8 +91,8 @@ function UserInfo() {
                         />
                         {userInfo.image && (
                             <img
-                                src={`data:image/jpeg;base64,${userInfo.image}`} // Hiển thị hình ảnh ở định dạng Base64
-                                alt="profile"// Adjust as needed
+                                src={userInfo.image.startsWith("data:image/") ? userInfo.image : `data:image/jpeg;base64,${userInfo.image}`} 
+                                alt="profile"
                             />
                         )}
                     </div>

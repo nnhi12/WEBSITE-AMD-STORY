@@ -8,7 +8,7 @@ const ListFavourite = ({ userId, showChapters }) => {
   useEffect(() => {
     if (userId) {
       console.log('Using User ID:', userId);
-      axios.get(`http://localhost:3001/users/${userId}/following-stories`)
+      axios.get(`http://localhost:3001/users/${userId}/followingstories`)
         .then(response => {
           console.log('Fetched books:', response.data);
           setBooks(response.data);
