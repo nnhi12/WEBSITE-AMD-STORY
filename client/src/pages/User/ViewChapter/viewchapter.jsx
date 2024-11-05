@@ -7,19 +7,41 @@ import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
 
 function ViewChapter() {
-  const { chapterId } = useParams();
+  const { chapterId, storyId } = useParams();
   const navigate = useNavigate();
-  const [chapter, setChapter] = useState(null);
+  const [chapterData, setChapterData] = useState({ chapter: null, previousId: null, nextId: null });
+  const [chapters, setChapters] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Trạng thái mở dropdown
 
   useEffect(() => {
-    axios.get(`http://localhost:3001/chapters/${chapterId}`)
+    axios.get(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}`)
       .then(response => {
-        setChapter(response.data);
+        setChapterData(response.data);
       })
       .catch(error => {
         console.error('Error fetching chapter:', error);
       });
-  }, [chapterId]);
+  }, [chapterId, storyId]);
+
+  const { chapter, previousId, nextId } = chapterData;
+
+  // Hàm để mở hoặc đóng dropdown và gọi API nếu cần
+  const toggleDropdown = () => {
+    if (!isDropdownOpen) {
+      // Chỉ gọi API nếu dropdown chưa mở
+      axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
+        .then(response => {
+          setChapters(response.data);
+          setIsDropdownOpen(true); // Mở dropdown sau khi lấy dữ liệu
+        })
+        .catch(error => {
+          console.error('Error fetching chapters:', error);
+        });
+    } else {
+      // Đóng dropdown nếu nó đang mở
+      setIsDropdownOpen(false);
+    }
+  };
 
   if (!chapter) {
     return <div>Loading...</div>;
@@ -35,27 +57,89 @@ function ViewChapter() {
         <h2 className="chapter-now">{chapter.name}</h2>
       </div>
       <div className="chapter-select-buttons">
-        <button className="chapter-btn chapter-btn-primary" onClick={() => navigate(`/viewchapter/${chapter.previousId}`)} disabled={!chapter.previousId}>
+        <button 
+          className="chapter-btn chapter-btn-primary" 
+          onClick={() => previousId && navigate(`/stories/${storyId}/chapters/${previousId}`)} 
+          disabled={!previousId}
+        >
           Chương trước
         </button>
-        <button className="chapter-btn chapter-btn-secondary">
-          {/* Placeholder for any additional actions */}
-        </button>
-        <button className="chapter-btn chapter-btn-primary" onClick={() => navigate(`/viewchapter/${chapter.nextId}`)} disabled={!chapter.nextId}>
+        
+        <div className="u-view-dropdown">
+          <button 
+            className="chapter-btn chapter-btn-secondary" 
+            onClick={toggleDropdown} // Gọi hàm mở/đóng dropdown
+          >
+            Danh sách chương
+          </button>
+          {isDropdownOpen && (
+            <div className="u-view-dropdown-menu">
+              <ul>
+                {chapters.map(chap => (
+                  <li key={chap._id}>
+                    <button onClick={() => {
+                      navigate(`/stories/${storyId}/chapters/${chap._id}`);
+                      setIsDropdownOpen(false); // Đóng dropdown sau khi chọn chương
+                    }}>
+                      {chap.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <button 
+          className="chapter-btn chapter-btn-primary" 
+          onClick={() => nextId && navigate(`/stories/${storyId}/chapters/${nextId}`)} 
+          disabled={!nextId}
+        >
           Chương tiếp
         </button>
       </div>
       <div className="chapter-content-text">
-        <p>{chapter.content}</p>
+        <span>{chapter.content}</span>
       </div>
       <div className="chapter-select-buttons">
-        <button className="chapter-btn chapter-btn-primary" onClick={() => navigate(`/viewchapter/${chapter.previousId}`)} disabled={!chapter.previousId}>
+        <button 
+          className="chapter-btn chapter-btn-primary" 
+          onClick={() => previousId && navigate(`/stories/${storyId}/chapters/${previousId}`)} 
+          disabled={!previousId}
+        >
           Chương trước
         </button>
-        <button className="chapter-btn chapter-btn-secondary">
-          {/* Placeholder for any additional actions */}
-        </button>
-        <button className="chapter-btn chapter-btn-primary" onClick={() => navigate(`/viewchapter/${chapter.nextId}`)} disabled={!chapter.nextId}>
+        
+        <div className="u-view-dropdown">
+          <button 
+            className="chapter-btn chapter-btn-secondary" 
+            onClick={toggleDropdown} // Gọi hàm mở/đóng dropdown
+          >
+            Danh sách chương
+          </button>
+          {isDropdownOpen && (
+            <div className="u-view-dropdown-menu">
+              <ul>
+                {chapters.map(chap => (
+                  <li key={chap._id}>
+                    <button onClick={() => {
+                      navigate(`/stories/${storyId}/chapters/${chap._id}`);
+                      setIsDropdownOpen(false); // Đóng dropdown sau khi chọn chương
+                    }}>
+                      {chap.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <button 
+          className="chapter-btn chapter-btn-primary" 
+          onClick={() => nextId && navigate(`/stories/${storyId}/chapters/${nextId}`)} 
+          disabled={!nextId}
+        >
           Chương tiếp
         </button>
       </div>

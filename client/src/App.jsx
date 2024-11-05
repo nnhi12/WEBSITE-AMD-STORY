@@ -24,8 +24,8 @@ function App() {
             <Route path = '/register' element = {<SignUp />}> </Route>
             <Route path = '/login' element = {<LogIn />}> </Route>
             <Route path = '/' element = {<HomePage />}> </Route>
-            <Route path = '//storyinfo/:storyId' element = {<StoryInfo />}> </Route>
-            <Route path = '/viewchapter/:chapterID' element = {<ChapterView />}> </Route>
+            <Route path = '/storyinfo/:storyId' element = {<StoryInfo />}> </Route>
+            <Route path='/stories/:storyId/chapters/:chapterId' element={<ChapterView />} />
             <Route path = '/library' element = {<ListReading />}> </Route>
             <Route path="/classifiedbygenre/:categoryId" element={<ClassifiedByGenre />}>  </Route>
             <Route path = '/classifiedbychapter' element = {<ClassifiedByChapter />}> </Route>

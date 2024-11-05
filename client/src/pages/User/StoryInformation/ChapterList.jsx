@@ -23,7 +23,7 @@ const ChapterList = () => {
       <ul>
         {chapters.map((chapter, index) => (
           <li key={index} className="u-chapter-item">
-            <a href={`/viewchapter/${chapter._id}`}>★ {chapter.name}</a>
+            <a href={`/stories/${storyId}/chapters/${chapter._id}`}>★ {chapter.name}</a>
           </li>
         ))}
       </ul>
