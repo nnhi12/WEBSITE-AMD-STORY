@@ -10,6 +10,7 @@ const { redirect } = require('react-router-dom');
 const userModel = require('./models/User.js');
 const categoryModel = require('./models/Category.js');
 const chapterModel = require('./models/Chapter.js');
+const commentModel = require('./models/Comment.js');
 
 const app = express();
 
@@ -209,6 +210,92 @@ app.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
     }
 });
 
+//comment
+app.post('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
+    try {
+        const { content, accountId } = req.body;
+        
+        // Find the user by accountId
+        const user = await userModel.findOne({ account: accountId });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Find the chapter by chapterId
+        const chapter = await chapterModel.findById(req.params.chapterId);
+        if (!chapter) {
+            return res.status(404).send('Chapter not found');
+        }
+
+        // Create and save the new comment
+        const newComment = await new commentModel({
+            message: content,
+            created_at: new Date(),
+        }).save();
+
+        // Update user by pushing the new comment's ID into their comments array
+        await userModel.findByIdAndUpdate(user._id, { $push: { comments: newComment._id } });
+
+        // Add the new comment's ID to the chapter's comments array and save
+        await chapterModel.findByIdAndUpdate(
+            chapter._id, 
+            { $push: { comments: newComment._id } },
+            { new: true }  // Option to return the updated document
+        );
+
+        res.status(200).json({ message: 'Comment added successfully', comment: newComment });
+    } catch (err) {
+        console.error('Error adding comment:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+app.get('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
+    try {
+        // Find the chapter by chapterId and populate the comments field
+        const chapter = await chapterModel.findById(req.params.chapterId).populate('comments');
+
+        if (!chapter) {
+            return res.status(404).send('Chapter not found');
+        }
+
+        const comments = chapter.comments;
+        const commentsWithUserInfo = await Promise.all(comments.map(async (comment) => {
+            const user = await userModel.findOne({ comments: comment._id}); // Tìm người dùng theo userId trong bình luận
+            if (user) {
+                // Convert image Buffer to base64 (nếu có hình ảnh)
+                const imageBase64 = user.image ? `data:image/jpeg;base64,${user.image.toString('base64')}` : null;
+                
+                return {
+                    content: comment.content,
+                    message: comment.message,
+                    created_at: comment.created_at,
+                    user: {
+                        username: user.fullname, // Lấy username
+                        image: imageBase64,      // Lấy hình ảnh (nếu có)
+                    }
+                };
+            } else {
+                return {
+                    content: comment.content,
+                    message: comment.message,
+                    created_at: comment.created_at,
+                    user: {
+                        username: 'Unknown',
+                        image: null
+                    }
+                };
+            }
+        }));
+
+        res.status(200).json({ comments: commentsWithUserInfo });
+    } catch (err) {
+        console.error('Error fetching comments:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+
 
 app.get("/userinfo/:accountId", async (req, res) => {
     const accountId = req.params.accountId;
@@ -317,6 +404,32 @@ app.get('/users/:accountId/followingstories', async (req, res) => {
         const followedStories = await storyModel.find({ _id: { $in: user.story_following } });
         console.log('Followed stories found:', followedStories);
         const modifiedStories = followedStories.map(story => ({
+            ...story._doc,
+            image: story.image ? story.image.toString('base64') : null,
+        }));
+
+        res.json(modifiedStories);
+    } catch (err) {
+        console.error('Error fetching followed stories:', err.message);
+        res.status(500).send(`Server error: ${err.message}`);
+    }
+});
+
+app.get('/users/:accountId/readingstories', async (req, res) => {
+    try {
+        const accountId = req.params.accountId;
+        const account = await accountModel.findById(accountId);
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+        const user = await userModel.findOne({ account: accountId }).populate('story_reading');
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        console.log('User found:', user);
+        const readStories = await storyModel.find({ _id: { $in: user.story_reading } });
+        console.log('Followed stories found:', readStories);
+        const modifiedStories = readStories.map(story => ({
             ...story._doc,
             image: story.image ? story.image.toString('base64') : null,
         }));

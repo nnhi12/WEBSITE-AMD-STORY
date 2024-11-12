@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '../../../layouts/header/User/header.jsx';
 import Footer from '../../../layouts/footer/User/footer.jsx';
+import Navbar from '../../../components/User/navbar.jsx';
 import ListSearching from '../../../components/User/ListSeaching.jsx';
 import '../../../components/User/homepage.css';
 
@@ -17,6 +18,7 @@ const SearchStory = () => {
   return (
     <div className="u-main-page">
       <Header onSearch={handleSearch} />
+      <Navbar />
       <div className="main-page-content">
         {searchResults.length > 0 ? (
           <div className="search-results">
