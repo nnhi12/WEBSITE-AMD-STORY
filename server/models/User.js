@@ -6,8 +6,8 @@ const userSchema = new mongoose.Schema({
     image: { type: Buffer, default: Buffer.from('') },
     age: { type: Number, default: 0 }, // Đặt về 0 nếu không có độ tuổi
     email: String,
-    comments: { type: [String], default: [] },
-    story_reading: { type: [String], default: [] },
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
+    story_reading: { type: [mongoose.Schema.Types.ObjectId], ref: 'Story'},
     story_following: { type: [mongoose.Schema.Types.ObjectId], ref: 'Story' }
 }, { versionKey: false }
 );

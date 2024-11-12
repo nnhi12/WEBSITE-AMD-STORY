@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '../../../layouts/header/User/header.jsx';
 import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
-import ListStory from '../../../components/User/ListReading.jsx';
+import ListStory from '../../../components/User/ListHostStory.jsx';
 import ListGenre from '../../../components/User/ListGenre.jsx';
 import '../../../components/User/homepage.css';
 

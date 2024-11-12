@@ -5,9 +5,9 @@ const chapterSchema = new mongoose.Schema({
     content: String,
     view: Number,
     status: Boolean,
-    created_at: { type : Date, default: Date.now },
-    updated_at: { type : Date, default: Date.now },
-    comments: [String]
+    posted_at: Date,
+    updated_at: Date,
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
 }, { versionKey: false }
 );
 
