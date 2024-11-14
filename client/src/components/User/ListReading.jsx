@@ -4,6 +4,11 @@ import Book from './book';
 
 const ListReading = ({ showChapters }) => {
     const [books, setBooks] = useState([]);
+    const [userId, setUserId] = useState(null);
+    useEffect(() => {
+        const storedUserId = localStorage.getItem("accountId");
+        setUserId(storedUserId);
+    }, []);
 
     useEffect(() => {
         // Sử dụng axios để fetch dữ liệu từ API
@@ -21,7 +26,7 @@ const ListReading = ({ showChapters }) => {
         <div className="container my-5">
             <div className="row row-cols-4">
                 {books.map((book, index) => (
-                    <Book key={index} data={book} showChapters={showChapters} />
+                    <Book key={index} data={book} userId = {userId} showChapters={showChapters} />
                 ))}
             </div>
         </div>

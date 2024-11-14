@@ -24,22 +24,7 @@ class Book extends Component {
     const { data, userId } = this.props;
 
     if (option === 'follow') {
-      console.log(`Add to following list: ${data.name}`);
-
-      // Use axios to make the API call
-      axios
-        .post('http://localhost:3001/add-to-follow-list', {
-          accountId: userId,
-          storyId: data._id,
-        })
-        .then((response) => {
-          if (response.data.message) {
-            console.log(response.data.message);
-          }
-        })
-        .catch((error) => {
-          console.error('Error adding story to reading list:', error);
-        });
+      console.log(`Follow story: ${data.name}`);
     } else if (option === 'addToList') {
       console.log(`Add to reading list: ${data.name}`);
 

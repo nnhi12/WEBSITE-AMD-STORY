@@ -441,6 +441,45 @@ app.get('/users/:accountId/readingstories', async (req, res) => {
     }
 });
 
+app.post('/add-to-reading-list', async (req, res) => {
+    const { accountId, storyId } = req.body;
+    const user = await userModel.findOne({ account: accountId });
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    try {
+      // Find the user and update the reading list
+      await userModel.findByIdAndUpdate(user._id, { $push: { story_reading: storyId } });
+
+      if (user) {
+        res.status(200).json({ message: 'Story added to reading list successfully.', user });
+      } else {
+        res.status(404).json({ message: 'User not found.' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error adding story to reading list.', error });
+    }
+  });
+
+  app.post('/add-to-follow-list', async (req, res) => {
+    const { accountId, storyId } = req.body;
+    const user = await userModel.findOne({ account: accountId });
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    try {
+      // Find the user and update the reading list
+      await userModel.findByIdAndUpdate(user._id, { $push: { story_following: storyId } });
+
+      if (user) {
+        res.status(200).json({ message: 'Story added to reading list successfully.', user });
+      } else {
+        res.status(404).json({ message: 'User not found.' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error adding story to reading list.', error });
+    }
+  });
 
 app.listen(3001, () => {
     console.log('Success!');

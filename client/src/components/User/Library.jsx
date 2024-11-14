@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Book from './book';
+import Book from './bookinlib';
 
 const ListReading = ({ userId, showChapters }) => {
   const [books, setBooks] = useState([]);
