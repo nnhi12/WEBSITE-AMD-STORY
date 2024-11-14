@@ -481,6 +481,40 @@ app.post('/add-to-reading-list', async (req, res) => {
     }
   });
 
+//xóa khỏi danh sách
+  app.post('/remove-from-follow-list', async (req, res) => {
+    const { accountId, storyId } = req.body;
+    const user = await userModel.findOne({ account: accountId });
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    try {
+        // Find the user and remove the story from the following list
+        await userModel.findByIdAndUpdate(user._id, { $pull: { story_reading: storyId } });
+
+        res.status(200).json({ message: 'Story removed from following list successfully.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error removing story from following list.', error });
+    }
+});
+
+app.post('/remove-from-reading-list', async (req, res) => {
+    const { accountId, storyId } = req.body;
+    const user = await userModel.findOne({ account: accountId });
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    try {
+        // Find the user and remove the story from the following list
+        await userModel.findByIdAndUpdate(user._id, { $pull: { story_following: storyId } });
+
+        res.status(200).json({ message: 'Story removed from following list successfully.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error removing story from following list.', error });
+    }
+});
+
+
 app.listen(3001, () => {
     console.log('Success!');
 })
