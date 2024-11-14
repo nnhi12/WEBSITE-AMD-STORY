@@ -18,14 +18,24 @@ const ListReading = ({ userId, showChapters }) => {
         });
     }
   }, [userId]);
+  
+  const handleBookRemoved = (removedBookId) => {
+    setBooks(books.filter(book => book._id !== removedBookId));
+  };
 
   return (
     <div className="container my-5">
       <div className="row row-cols-4">
         {books.length > 0 ? books.map((book, index) => (
-          <Book key={index} data={book} showChapters={showChapters} />
+          <Book 
+            key={index} 
+            data={book} 
+            userId={userId} 
+            showChapters={showChapters} 
+            onBookRemoved={handleBookRemoved} // Truyền hàm callback vào component Book
+          />
         )) : (
-          <p>No followed stories found.</p>
+          <p>No reading stories found.</p>
         )}
       </div>
     </div>
