@@ -11,7 +11,7 @@ const NewestChapter = () => {
     axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
       .then(response => {
         const sortedChapters = response.data
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort by newest first
+          .sort((a, b) => new Date(b.posted_at) - new Date(a.posted_at)) // Sort by newest first
           .slice(0, 5); // Limit to 5 chapters
         setChapters(sortedChapters);
       })

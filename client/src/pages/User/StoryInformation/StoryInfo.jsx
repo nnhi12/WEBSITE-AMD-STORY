@@ -28,7 +28,7 @@ const StoryInfo = () => {
         <div className="u-story-name">
           <h1 className="u-page-title">{story.name}</h1>
           <h4 className="u-author">
-            {story.authors && story.authors.length > 0 ? story.authors.map(author => author.name).join(', ') : 'Unknown Author'}
+            {/* {story.authors && story.authors.length > 0 ? story.authors.map(author => author.name).join(', ') : 'Unknown Author'} */}
           </h4>
         </div>
         <div className="u-date-info">
