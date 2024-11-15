@@ -76,10 +76,10 @@ class Book extends Component {
               {data.chapters.slice(0, 2).map((chapter, index) => (
                 <li key={index}>
                   <Link
-                    to={`/stories/${data._id}/chapters/${chapter}`}
+                    to={`/stories/${data._id}/chapters/${chapter.id}`}
                     className="u-text-decoration-none"
                   >
-                    {chapter}
+                    {chapter.name}
                   </Link>
                 </li>
               ))}

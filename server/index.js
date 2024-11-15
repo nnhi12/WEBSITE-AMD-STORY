@@ -392,23 +392,34 @@ app.get('/categories/:categoryId/stories', async (req, res) => {
 app.get('/users/:accountId/followingstories', async (req, res) => {
     try {
         const accountId = req.params.accountId;
+
+        // Kiểm tra tài khoản tồn tại
         const account = await accountModel.findById(accountId);
         if (!account) {
             return res.status(404).json({ message: "Account not found" });
         }
-        const user = await userModel.findOne({ account: accountId }).populate('story_following');
+
+        // Tìm user và populate các truyện đọc cùng chapters
+        const user = await userModel.findOne({ account: accountId }).populate({
+            path: 'story_following',
+            populate: { path: 'chapters', select: 'name' } // Lấy tên chapter
+        });
+
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        console.log('User found:', user);
-        const followedStories = await storyModel.find({ _id: { $in: user.story_following } });
-        console.log('Followed stories found:', followedStories);
-        const modifiedStories = followedStories.map(story => ({
-            ...story._doc,
-            image: story.image ? story.image.toString('base64') : null,
+
+        // Chuẩn bị dữ liệu để gửi về frontend
+        const readStories = user.story_following.map(story => ({
+            ...story.toObject(),
+            image: story.image ? story.image.toString('base64') : null, // Convert ảnh sang base64
+            chapters: story.chapters.map(chapter => ({
+                id: chapter._id,
+                name: chapter.name
+            }))
         }));
 
-        res.json(modifiedStories);
+        res.json(readStories);
     } catch (err) {
         console.error('Error fetching followed stories:', err.message);
         res.status(500).send(`Server error: ${err.message}`);
@@ -418,28 +429,40 @@ app.get('/users/:accountId/followingstories', async (req, res) => {
 app.get('/users/:accountId/readingstories', async (req, res) => {
     try {
         const accountId = req.params.accountId;
+
+        // Kiểm tra tài khoản tồn tại
         const account = await accountModel.findById(accountId);
         if (!account) {
             return res.status(404).json({ message: "Account not found" });
         }
-        const user = await userModel.findOne({ account: accountId }).populate('story_reading');
+
+        // Tìm user và populate các truyện đọc cùng chapters
+        const user = await userModel.findOne({ account: accountId }).populate({
+            path: 'story_reading',
+            populate: { path: 'chapters', select: 'name' } // Lấy tên chapter
+        });
+
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        console.log('User found:', user);
-        const readStories = await storyModel.find({ _id: { $in: user.story_reading } });
-        console.log('Followed stories found:', readStories);
-        const modifiedStories = readStories.map(story => ({
-            ...story._doc,
-            image: story.image ? story.image.toString('base64') : null,
+
+        // Chuẩn bị dữ liệu để gửi về frontend
+        const readStories = user.story_reading.map(story => ({
+            ...story.toObject(),
+            image: story.image ? story.image.toString('base64') : null, // Convert ảnh sang base64
+            chapters: story.chapters.map(chapter => ({
+                id: chapter._id,
+                name: chapter.name
+            }))
         }));
 
-        res.json(modifiedStories);
+        res.json(readStories);
     } catch (err) {
         console.error('Error fetching followed stories:', err.message);
         res.status(500).send(`Server error: ${err.message}`);
     }
 });
+
 
 app.post('/add-to-reading-list', async (req, res) => {
     const { accountId, storyId } = req.body;
@@ -490,7 +513,7 @@ app.post('/add-to-reading-list', async (req, res) => {
     }
     try {
         // Find the user and remove the story from the following list
-        await userModel.findByIdAndUpdate(user._id, { $pull: { story_reading: storyId } });
+        await userModel.findByIdAndUpdate(user._id, { $pull: { story_following: storyId } });
 
         res.status(200).json({ message: 'Story removed from following list successfully.' });
     } catch (error) {
@@ -506,7 +529,7 @@ app.post('/remove-from-reading-list', async (req, res) => {
     }
     try {
         // Find the user and remove the story from the following list
-        await userModel.findByIdAndUpdate(user._id, { $pull: { story_following: storyId } });
+        await userModel.findByIdAndUpdate(user._id, { $pull: { story_reading: storyId } });
 
         res.status(200).json({ message: 'Story removed from following list successfully.' });
     } catch (error) {
