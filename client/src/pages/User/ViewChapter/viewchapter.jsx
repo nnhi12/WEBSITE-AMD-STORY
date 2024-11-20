@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './viewchapter.css';
 import Header from '../../../layouts/header/User/header.jsx';
@@ -15,8 +15,18 @@ function ViewChapter() {
   const [story, setStory] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
-
   const [userId, setUserId] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [paragraphs, setParagraphs] = useState([]);
+  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
+  const paragraphRefs = useRef([]);
+  const location = useLocation();
+  const rowCount = location.state?.rowCount || 0;
+
+  console.log(rowCount);
+  const synth = window.speechSynthesis;
+  let utteranceQueue = [];
+
   useEffect(() => {
     const storedUserId = localStorage.getItem("accountId");
     setUserId(storedUserId);
@@ -26,6 +36,8 @@ function ViewChapter() {
     axios.get(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}`)
       .then(response => {
         setChapterData(response.data);
+        const content = response.data.chapter?.content || '';
+        setParagraphs(content.split('\n').filter(p => p.trim()));
       })
       .catch(error => {
         console.error('Error fetching chapter:', error);
@@ -36,7 +48,7 @@ function ViewChapter() {
         if (response.data && Array.isArray(response.data.comments)) {
           setComments(response.data.comments);
         } else {
-          setComments([]);  // Default to an empty array if no comments are found or data is malformed
+          setComments([]);
         }
       })
       .catch(error => {
@@ -50,10 +62,13 @@ function ViewChapter() {
       .catch(error => {
         console.error('Error fetching story:', error);
       });
-
   }, [chapterId, storyId]);
 
-  const { chapter, previousId, nextId } = chapterData;
+  useEffect(() => {
+    if (rowCount && paragraphRefs.current[rowCount]) {
+      paragraphRefs.current[rowCount].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [rowCount, paragraphs]);
 
   const toggleDropdown = () => {
     if (!isDropdownOpen) {
@@ -73,7 +88,7 @@ function ViewChapter() {
   const handleCommentSubmit = () => {
     axios.post(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}/comments`, {
       content: newComment,
-      accountId: userId // Gửi userId trong yêu cầu
+      accountId: userId
     })
       .then(response => {
         setComments([...comments, response.data.comment]);
@@ -85,13 +100,48 @@ function ViewChapter() {
   };
 
   const navigateToChapter = (chapterId) => {
+    setCurrentParagraphIndex(0); // Reset the paragraph index
+    setIsSpeaking(false); // Stop the current speech
     navigate(`/stories/${storyId}/chapters/${chapterId}`);
-    window.scrollTo(0, 0); // Scroll to the top of the page
+    window.scrollTo(0, 0);
   };
 
   const getButtonClass = (isDisabled) => {
     return isDisabled ? 'chapter-btn-disabled' : 'chapter-btn-primary';
   };
+
+  const handleReadChapter = () => {
+    if (!paragraphs.length) return;
+
+    utteranceQueue = paragraphs.slice(currentParagraphIndex).map((text, index) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'vi-VN';
+      utterance.onboundary = (event) => {
+        if (event.charIndex === 0) {
+          const element = paragraphRefs.current[currentParagraphIndex + index];
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setCurrentParagraphIndex(currentParagraphIndex + index);
+        }
+      };
+      return utterance;
+    });
+
+    utteranceQueue.forEach(utterance => synth.speak(utterance));
+    setIsSpeaking(true);
+  };
+
+  const handleStopReading = () => {
+    synth.cancel();
+    setIsSpeaking(false);
+  };
+
+  const handleContinueReading = () => {
+    handleReadChapter();
+  };
+
+  const { chapter, previousId, nextId } = chapterData;
 
   if (!chapter) {
     return <div>Loading...</div>;
@@ -107,6 +157,22 @@ function ViewChapter() {
         </p>
         <h1 className="chapter-title">{story.name}</h1>
         <h2 className="chapter-now">{chapter.name}</h2>
+        <div className="audio-buttons">
+          <button
+            className={`chapter-btn chapter-btn-secondary ${isSpeaking ? 'fixed-audio-btn' : ''}`}
+            onClick={isSpeaking ? handleStopReading : handleReadChapter}
+          >
+            {isSpeaking ? "Dừng nghe" : "Nghe truyện"}
+          </button>
+          {!isSpeaking && currentParagraphIndex > 0 && (
+            <button
+              className="chapter-btn chapter-btn-secondary fixed-audio-btn"
+              onClick={handleContinueReading}
+            >
+              Nghe tiếp
+            </button>
+          )}
+        </div>
       </div>
       <div className="chapter-select-buttons">
         <button
@@ -151,7 +217,11 @@ function ViewChapter() {
         </button>
       </div>
       <div className="chapter-content-text">
-        <span>{chapter.content}</span>
+        {paragraphs.map((para, index) => (
+          <p key={index} ref={el => paragraphRefs.current[index] = el} className="chapter-paragraph">
+            {para}
+          </p>
+        ))}
       </div>
       <div className="chapter-select-buttons">
         <button

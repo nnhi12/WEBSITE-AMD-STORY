@@ -11,6 +11,7 @@ const userModel = require('./models/User.js');
 const categoryModel = require('./models/Category.js');
 const chapterModel = require('./models/Chapter.js');
 const commentModel = require('./models/Comment.js');
+const readingchapterModel = require('./models/Readingchapter.js');
 
 const app = express();
 
@@ -214,7 +215,7 @@ app.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
 app.post('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
     try {
         const { content, accountId } = req.body;
-        
+
         // Find the user by accountId
         const user = await userModel.findOne({ account: accountId });
         if (!user) {
@@ -238,7 +239,7 @@ app.post('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
 
         // Add the new comment's ID to the chapter's comments array and save
         await chapterModel.findByIdAndUpdate(
-            chapter._id, 
+            chapter._id,
             { $push: { comments: newComment._id } },
             { new: true }  // Option to return the updated document
         );
@@ -261,11 +262,11 @@ app.get('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
 
         const comments = chapter.comments;
         const commentsWithUserInfo = await Promise.all(comments.map(async (comment) => {
-            const user = await userModel.findOne({ comments: comment._id}); // Tìm người dùng theo userId trong bình luận
+            const user = await userModel.findOne({ comments: comment._id }); // Tìm người dùng theo userId trong bình luận
             if (user) {
                 // Convert image Buffer to base64 (nếu có hình ảnh)
                 const imageBase64 = user.image ? `data:image/jpeg;base64,${user.image.toString('base64')}` : null;
-                
+
                 return {
                     content: comment.content,
                     message: comment.message,
@@ -467,45 +468,67 @@ app.get('/users/:accountId/readingstories', async (req, res) => {
 app.post('/add-to-reading-list', async (req, res) => {
     const { accountId, storyId } = req.body;
     const user = await userModel.findOne({ account: accountId });
+    const story = await storyModel.findById(storyId);
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
     try {
-      // Find the user and update the reading list
-      await userModel.findByIdAndUpdate(user._id, { $push: { story_reading: storyId } });
 
-      if (user) {
-        res.status(200).json({ message: 'Story added to reading list successfully.', user });
-      } else {
-        res.status(404).json({ message: 'User not found.' });
-      }
+        if (user.story_reading.includes(storyId)) {
+            return res.status(400).json({ message: "Story already in reading list." });
+        }
+        // Find the user and update the reading list
+        await userModel.findByIdAndUpdate(user._id, { $push: { story_reading: storyId } });
+        if (story.user_reading.includes(user._id)) {
+            return res.status(400).json({ message: "User already in reading list." });
+        }
+        // Find the user and update the reading list
+        await storyModel.findByIdAndUpdate(storyId, { $push: { user_reading: user._id } });
+        if (user) {
+            res.status(200).json({ message: 'Story added to reading list successfully.', user });
+        } else {
+            res.status(404).json({ message: 'User not found.' });
+        }
+
+        
+
     } catch (error) {
-      res.status(500).json({ message: 'Error adding story to reading list.', error });
+        res.status(500).json({ message: 'Error adding story to reading list.', error });
     }
-  });
+});
 
-  app.post('/add-to-follow-list', async (req, res) => {
+app.post('/add-to-follow-list', async (req, res) => {
     const { accountId, storyId } = req.body;
     const user = await userModel.findOne({ account: accountId });
+    const story = await storyModel.findById(storyId);
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
     try {
-      // Find the user and update the reading list
-      await userModel.findByIdAndUpdate(user._id, { $push: { story_following: storyId } });
+        if (user.story_reading.includes(storyId)) {
+            return res.status(400).json({ message: "Story already in reading list." });
+        }
+        // Find the user and update the reading list
+        await userModel.findByIdAndUpdate(user._id, { $push: { story_following: storyId } });
 
-      if (user) {
-        res.status(200).json({ message: 'Story added to reading list successfully.', user });
-      } else {
-        res.status(404).json({ message: 'User not found.' });
-      }
+        if (story.user_reading.includes(user._id)) {
+            return res.status(400).json({ message: "User already in reading list." });
+        }
+        // Find the user and update the following list
+        await storyModel.findByIdAndUpdate(storyId, { $push: { user_following: user._id } });
+
+        if (user) {
+            res.status(200).json({ message: 'Story added to reading list successfully.', user });
+        } else {
+            res.status(404).json({ message: 'User not found.' });
+        }
     } catch (error) {
-      res.status(500).json({ message: 'Error adding story to reading list.', error });
+        res.status(500).json({ message: 'Error adding story to reading list.', error });
     }
-  });
+});
 
 //xóa khỏi danh sách
-  app.post('/remove-from-follow-list', async (req, res) => {
+app.post('/remove-from-follow-list', async (req, res) => {
     const { accountId, storyId } = req.body;
     const user = await userModel.findOne({ account: accountId });
     if (!user) {
@@ -514,6 +537,7 @@ app.post('/add-to-reading-list', async (req, res) => {
     try {
         // Find the user and remove the story from the following list
         await userModel.findByIdAndUpdate(user._id, { $pull: { story_following: storyId } });
+        await storyModel.findByIdAndUpdate(storyId, { $pull: { user_following: user._id } });
 
         res.status(200).json({ message: 'Story removed from following list successfully.' });
     } catch (error) {
@@ -530,13 +554,129 @@ app.post('/remove-from-reading-list', async (req, res) => {
     try {
         // Find the user and remove the story from the following list
         await userModel.findByIdAndUpdate(user._id, { $pull: { story_reading: storyId } });
+        await storyModel.findByIdAndUpdate(storyId, { $pull: { user_reading: user._id } });
 
-        res.status(200).json({ message: 'Story removed from following list successfully.' });
+        res.status(200).json({ message: 'Story removed from reading list successfully.' });
     } catch (error) {
-        res.status(500).json({ message: 'Error removing story from following list.', error });
+        res.status(500).json({ message: 'Error removing story from reading list.', error });
     }
 });
 
+app.post("/reset-password", async (req, res) => {
+    const { email, newPassword } = req.body;
+
+    try {
+        // Kiểm tra xem email có tồn tại trong User không
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "Email không tồn tại" });
+        }
+
+        // Kiểm tra tài khoản tương ứng
+        const account = await accountModel.findOne({ _id: user.account });
+        if (!account) {
+            return res.status(404).json({ message: "Tài khoản không tồn tại cho email này" });
+        }
+
+        // Cập nhật mật khẩu mới cho tài khoản
+        account.password = newPassword; // Cập nhật mật khẩu mới mà không mã hóa
+        await account.save();
+
+        res.status(200).json({ message: "Mật khẩu đã được thay đổi thành công!" });
+    } catch (error) {
+        console.error("Lỗi khi thay đổi mật khẩu:", error);
+        res.status(500).json({ message: "Lỗi trong quá trình thay đổi mật khẩu. Vui lòng thử lại." });
+    }
+});
+
+//xử lý button đọc truyện
+//first
+app.get('/stories/:storyId/first', async (req, res) => {
+    try {
+      const story = await storyModel.findById(req.params.storyId).populate('chapters');
+  
+      if (!story) {
+        return res.status(404).send('Story not found');
+      }
+  
+      if (!story.chapters || story.chapters.length === 0) {
+        return res.status(404).send('No chapters found for this story');
+      }
+  
+      // Ensure chapters are populated correctly
+      const firstChapter = story.chapters[0];
+      if (!firstChapter) {
+        return res.status(404).send('First chapter not found');
+      }
+  
+      res.json(firstChapter);
+    } catch (err) {
+      console.error('Error fetching first chapter:', err);
+      res.status(500).send('Server error');
+    }
+  });
+  
+
+app.get('/stories/:storyId/latest', async (req, res) => {
+    try {
+        const story = await storyModel.findById(req.params.storyId).populate('chapters');
+        if (!story || story.chapters.length === 0) {
+            return res.status(404).send('No chapters found');
+        }
+        const latestChapter = story.chapters[story.chapters.length - 1]; // Lấy chương cuối
+        res.json(latestChapter);
+    } catch (err) {
+        console.error('Error fetching latest chapter:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+
+///đánh dấu chapter đang đọc
+app.get('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) => {
+    try {
+      const { accountId, storyId } = req.params;
+      const account = await accountModel.findById(accountId);
+      if (!account) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      const user = await userModel.findOne({ account: accountId });
+      const record = await readingchapterModel.findOne({ user_id: user._id, story_id: storyId }).populate('chapter_id');
+      if (!record) {
+        return res.json({ chapter: null, count_row: 0 }); // No reading progress
+      }
+      res.json({ chapter: record.chapter_id, count_row: record.count_row }); // Current reading progress
+    } catch (err) {
+      console.error('Error fetching reading chapter:', err);
+      res.status(500).send('Server error');
+    }
+  });
+  
+  app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) => {
+    try {
+      const { accountId, storyId } = req.params;
+      const { chapterId, countRow } = req.body;
+  
+      const account = await accountModel.findById(accountId);
+      if (!account) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+  
+      const user = await userModel.findOne({ account: accountId });
+  
+      const record = await readingchapterModel.findOneAndUpdate(
+        { user_id: user._id, story_id: storyId },
+        { chapter_id: chapterId, count_row: countRow },
+        { new: true, upsert: true } // Update or insert if not exists
+      );
+  
+      res.json({ message: 'Reading progress updated successfully', record });
+    } catch (err) {
+      console.error('Error updating reading chapter:', err);
+      res.status(500).send('Server error');
+    }
+  });
+  
 
 app.listen(3001, () => {
     console.log('Success!');

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'
 import './Login.css';
+import { Link } from 'react-router-dom';
 
 function Login() {
   const history = useNavigate();
@@ -46,6 +47,9 @@ function Login() {
   return (
     <div className="login-body">
       <div className="body-overlay"></div>
+      <Link to='/' className="back-button">
+          Quay lại trang chủ
+        </Link>
       <div className="login-container">
         <h2>Đăng Nhập</h2>
         <form onSubmit={handleSubmit}>
@@ -57,6 +61,10 @@ function Login() {
         <p className="sign-up-text">
           Haven't had an account yet? <a href="/register">Sign up now!</a>
         </p>
+        <p className="forgot-password-text">
+          <a href="/forgot-password">Quên mật khẩu?</a>
+        </p>
+        
       </div>
     </div>
   );

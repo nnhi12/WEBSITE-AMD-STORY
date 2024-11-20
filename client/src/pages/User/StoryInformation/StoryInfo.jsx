@@ -1,25 +1,92 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './StoryInfo.css';
 
 const StoryInfo = () => {
   const { storyId } = useParams();
   const [story, setStory] = useState(null);
+  const [canContinueReading, setCanContinueReading] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const navigate = useNavigate(); // Hook điều hướng trong React Router
+  
+  useEffect(() => {
+    // Lấy userId từ localStorage
+    const storedUserId = localStorage.getItem("accountId");
+    setUserId(storedUserId);
+  }, []);
 
   useEffect(() => {
+    // Lấy thông tin câu chuyện
     axios.get(`http://localhost:3001/stories/${storyId}`)
       .then(response => {
         setStory(response.data);
+        console.log(response.data);
       })
       .catch(error => {
         console.error('Error fetching story:', error);
       });
-  }, [storyId]);
+
+    // Kiểm tra xem người dùng có thể tiếp tục đọc chương nào không
+    if (userId) {
+      axios.get(`http://localhost:3001/users/${userId}/stories/${storyId}/reading-chapter`)
+        .then(response => {
+          setCanContinueReading(!!response.data.chapter); // Kiểm tra xem có chapter nào hay không
+          console.log(response.data.chapter);
+          console.log(response.data.count_row);
+        })
+        .catch(error => console.error('Error checking continue reading availability:', error));
+    }
+  }, [userId, storyId]);
 
   if (!story) {
     return <div>Loading...</div>;
   }
+
+  const handleReadFromStart = () => {
+    axios.get(`http://localhost:3001/stories/${storyId}/first`)
+      .then(response => {
+        if (response.data) {
+          navigate(`/stories/${storyId}/chapters/${response.data._id}`);
+        }
+      })
+      .catch(error => console.error('Error fetching first chapter:', error));
+  };
+
+  const handleReadLatest = () => {
+    axios.get(`http://localhost:3001/stories/${storyId}/latest`)
+      .then(response => {
+        if (response.data) {
+          navigate(`/stories/${storyId}/chapters/${response.data._id}`);
+        }
+      })
+      .catch(error => console.error('Error fetching latest chapter:', error));
+  };
+
+  const handleContinueReading = () => {
+    if (userId && storyId) {
+      axios.get(`http://localhost:3001/users/${userId}/stories/${storyId}/reading-chapter`)
+        .then(response => {
+          const {chapter} = response.data;
+          const count_row = response.data.count_row;
+          console.log(count_row); 
+
+          // Kiểm tra xem chapter có phải là mảng hay đối tượng
+          if (Array.isArray(chapter) && chapter.length > 0) {
+            navigate(`/stories/${storyId}/chapters/${chapter[0]._id}`, {
+              state: { rowCount: count_row },
+            }); // Lấy chapter đầu tiên nếu là mảng
+          } else if (chapter && chapter._id) {
+            navigate(`/stories/${storyId}/chapters/${chapter._id}`, {
+              state: { rowCount: count_row },
+            });
+          } else {
+            console.error('No chapter found to continue reading.');
+          }
+        })
+        .catch(error => console.error('Error fetching reading chapter:', error));
+    }
+  };
 
   return (
     <section className="u-story-info">
@@ -38,8 +105,16 @@ const StoryInfo = () => {
         <h3>Summary</h3>
         <p>{story.description}</p>
         <div>
-          <button className="u-read-option-button">Đọc từ đầu</button>
-          <button className="u-read-option-button">Chương mới nhất</button>
+          <button className="u-read-option-button" onClick={handleReadFromStart}>Đọc từ đầu</button>
+          <button className="u-read-option-button" onClick={handleReadLatest}>Chương mới nhất</button>
+          <button
+            className="u-read-option-button"
+            onClick={handleContinueReading}
+            disabled={!canContinueReading} // Vô hiệu hóa nếu không có dữ liệu
+            style={{ display: canContinueReading ? 'inline-block' : 'none' }} // Ẩn nút nếu không có dữ liệu
+          >
+            Đọc tiếp
+          </button>
         </div>
       </div>
     </section>
