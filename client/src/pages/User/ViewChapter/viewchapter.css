@@ -222,3 +222,25 @@
 .comment-header span + span {
   margin-left: 10px;
 }
+
+
+
+.fixed-audio-btn {
+  position: fixed;
+  padding: 15px;
+  border-radius: 10px;
+  bottom: 20px; /* Cách đáy 20px */
+  right: 20px; /* Cách phải 20px */
+  z-index: 1000; /* Đảm bảo nằm trên các nội dung khác */
+}
+
+
+.audio-buttons { 
+  position: fixed; 
+  padding: 10px;
+  border-radius: 10px;
+  bottom: 20px; 
+  right: 20px; 
+  z-index: 1000; }
+
+.chapter-btn { margin: 0 5px; }

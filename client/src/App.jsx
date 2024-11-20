@@ -13,6 +13,7 @@ import FavouriteStory from './pages/User/FavouriteStory/FavouriteStory'
 import AboutUs from './pages/User/AboutUs/AboutUsPage'
 import SearchPage from './pages/User/SearchResult/SearchResult'
 import UserInfo from './pages/User/UserInformation/UserInformationPage'
+import ForgotPassword from './pages/Main/ForgotPassword/ForgotPassword'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 function App() {
   const [count, setCount] = useState(0)
@@ -34,6 +35,7 @@ function App() {
             <Route path = '/aboutus' element = {<AboutUs />}> </Route>
             <Route path = '/searchresult' element = {<SearchPage />}> </Route>
             <Route path = '/userinfo' element = {<UserInfo />}> </Route>
+            <Route path = '/forgot-password' element = {<ForgotPassword />}> </Route>
           </Routes>
         </BrowserRouter>
     </div>
