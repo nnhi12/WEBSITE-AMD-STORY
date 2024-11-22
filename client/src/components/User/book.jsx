@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Swal from 'sweetalert2';
 import './book.css';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -26,7 +27,7 @@ class Book extends Component {
     if (option === 'follow') {
       console.log(`Add to following list: ${data.name}`);
 
-      // Use axios to make the API call
+      // Check if the user has already followed the story
       axios
         .post('http://localhost:3001/add-to-follow-list', {
           accountId: userId,
@@ -34,16 +35,29 @@ class Book extends Component {
         })
         .then((response) => {
           if (response.data.message) {
-            console.log(response.data.message);
+            // Display success message
+            Swal.fire({
+              title: 'Thành công!',
+              text: 'Đã thêm vào danh sách theo dõi',
+              icon: 'success',
+              confirmButtonText: 'Đóng',
+            });
           }
         })
         .catch((error) => {
-          console.error('Error adding story to reading list:', error);
+          // If the error is that the story has already been followed
+          Swal.fire({
+            title: 'Lỗi!',
+            text: 'Bạn đã theo dõi truyện này rồi',
+            icon: 'error',
+            confirmButtonText: 'Đóng',
+          });
+          console.error('Error adding story to following list:', error);
         });
     } else if (option === 'addToList') {
       console.log(`Add to reading list: ${data.name}`);
 
-      // Use axios to make the API call
+      // Check if the user has already added the story to the reading list
       axios
         .post('http://localhost:3001/add-to-reading-list', {
           accountId: userId,
@@ -51,10 +65,23 @@ class Book extends Component {
         })
         .then((response) => {
           if (response.data.message) {
-            console.log(response.data.message);
+            // Display success message
+            Swal.fire({
+              title: 'Thành công!',
+              text: 'Đã thêm vào danh sách đọc',
+              icon: 'success',
+              confirmButtonText: 'Đóng',
+            });
           }
         })
         .catch((error) => {
+          // If the error is that the story has already been added
+          Swal.fire({
+            title: '',
+            text: 'Bạn đã lưu truyện này rồi',
+            icon: 'error',
+            confirmButtonText: 'Đóng',
+          });
           console.error('Error adding story to reading list:', error);
         });
     }

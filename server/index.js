@@ -504,17 +504,17 @@ app.post('/add-to-follow-list', async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
     try {
-        if (user.story_reading.includes(storyId)) {
+        if (user.story_following.includes(storyId)) {
             return res.status(400).json({ message: "Story already in reading list." });
         }
         // Find the user and update the reading list
         await userModel.findByIdAndUpdate(user._id, { $push: { story_following: storyId } });
 
-        if (story.user_reading.includes(user._id)) {
+        if (story.user_follow.includes(user._id)) {
             return res.status(400).json({ message: "User already in reading list." });
         }
         // Find the user and update the following list
-        await storyModel.findByIdAndUpdate(storyId, { $push: { user_following: user._id } });
+        await storyModel.findByIdAndUpdate(storyId, { $push: { user_follow: user._id } });
 
         if (user) {
             res.status(200).json({ message: 'Story added to reading list successfully.', user });
@@ -536,7 +536,7 @@ app.post('/remove-from-follow-list', async (req, res) => {
     try {
         // Find the user and remove the story from the following list
         await userModel.findByIdAndUpdate(user._id, { $pull: { story_following: storyId } });
-        await storyModel.findByIdAndUpdate(storyId, { $pull: { user_following: user._id } });
+        await storyModel.findByIdAndUpdate(storyId, { $pull: { user_follow: user._id } });
 
         res.status(200).json({ message: 'Story removed from following list successfully.' });
     } catch (error) {

@@ -7,7 +7,7 @@ import ListGenre from '../../../components/User/ListGenre.jsx';
 import '../../../components/User/homepage.css';
 
 
-const TopHotStory = () => (
+const ClassifiedByChapter = () => (
   <div className="u-main-page">
     <Header />
     <Navbar />
@@ -25,4 +25,4 @@ const TopHotStory = () => (
   </div>
 );
 
-export default TopHotStory;
+export default ClassifiedByChapter;

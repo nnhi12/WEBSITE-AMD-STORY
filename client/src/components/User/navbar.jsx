@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+import {useNavigate } from 'react-router-dom';
 import './navbar.css';
 
 const Navbar = () => {
   const [categories, setCategories] = useState([]);
-
+  const navigate = useNavigate();
+  
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -17,6 +20,22 @@ const Navbar = () => {
 
     fetchCategories();
   }, []);
+
+  const handleFavouritedClick = () => {
+    const accountID = localStorage.getItem('accountId');
+    if (!accountID) {
+      // User is not logged in, show SweetAlert2 notification
+      Swal.fire({
+        title: 'Please log in',
+        text: 'You need to be logged in to access your Favourited stories.',
+        icon: 'warning',
+        confirmButtonText: 'OK'
+      });
+    } else {
+      // User is logged in, navigate to the Favourited page
+      navigate('/favpage');
+    }
+  };
 
   return (
     <div className="u-nav-bar">
@@ -40,7 +59,7 @@ const Navbar = () => {
         </div>
       </div>
       <a href="/tophot">Novel HOT</a>
-      <a href="/favpage">Favourited</a>
+      <a href="#" onClick={handleFavouritedClick}>Favourited</a>
       <a href="/aboutus">About Us</a>
     </div>
   );
