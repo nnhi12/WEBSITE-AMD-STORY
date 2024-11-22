@@ -12,6 +12,8 @@ function Register() {
     confirmPassword: ""
   });
   const [message, setMessage] = useState(""); // Thông báo đăng ký
+  const [showPassword, setShowPassword] = useState(false); // Toggle password visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Toggle confirm password visibility
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,6 +25,13 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Kiểm tra nếu có trường nào bỏ trống
+    if (!createForm.username || !createForm.email || !createForm.password || !createForm.confirmPassword) {
+      setMessage("Please fill in all fields.");
+      return;
+    }
+
     // Kiểm tra confirm password
     if (createForm.password !== createForm.confirmPassword) {
       setMessage("Passwords do not match. Please try again.");
@@ -46,6 +55,16 @@ function Register() {
       console.error('Error registering account:', error);
       setMessage("Registration failed. Please try again.");
     }
+  };
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(prevState => !prevState);
+  };
+
+  // Toggle confirm password visibility
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(prevState => !prevState);
   };
 
   return (
@@ -83,23 +102,46 @@ function Register() {
               </div>
               <div className="regis-form-group">
                 <label>PASSWORD</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={createForm.password}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={createForm.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="password-toggle-btn"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
               <div className="regis-form-group">
                 <label>CONFIRM PASSWORD</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={createForm.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={createForm.confirmPassword}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleConfirmPasswordVisibility}
+                    className="password-toggle-btn"
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {createForm.password === createForm.confirmPassword && createForm.confirmPassword !== "" && (
+                  <div className="password-match-check">
+                    <span className="checkmark">✔</span> Passwords match!
+                  </div>
+                )}
               </div>
               <button type="submit" className="register-button">REGISTER</button>
             </form>

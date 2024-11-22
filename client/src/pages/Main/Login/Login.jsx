@@ -42,8 +42,6 @@ function Login() {
     }
   };
 
-
-
   return (
     <div className="login-body">
       <div className="body-overlay"></div>

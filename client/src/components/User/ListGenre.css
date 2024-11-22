@@ -36,7 +36,15 @@
     font-weight: bold;
     color: white;
     font-size: 17px;
-  }
+    text-decoration: underline; /* Gạch chân */
+    cursor: pointer; /* Thay đổi kiểu con trỏ khi đưa chuột vào */
+}
+
+.list-genre-book-item:hover .list-genre-book-title {
+    color: yellow; /* Thay đổi màu chữ khi hover */
+    text-decoration: underline; /* Gạch chân vẫn hiển thị khi hover */
+}
+
   
   .list-genre-book-views {
     font-size: 0.9em;

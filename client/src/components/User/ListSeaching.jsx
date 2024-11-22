@@ -1,30 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 import Book from './book';
 
-const ListSearching = ({ searchTerm, showChapters }) => {
-    const [books, setBooks] = useState([]);
-
-    useEffect(() => {
-        if (searchTerm) {
-            // Sử dụng axios để fetch dữ liệu từ API
-            axios.get(`http://localhost:3001/searchstory?name=${searchTerm}`)
-                .then(response => {
-                    console.log('Fetched books:', response.data);
-                    setBooks(response.data);
-                })
-                .catch(error => {
-                    console.error('Error fetching books:', error);
-                });
-        }
-    }, [searchTerm]);
-
+const ListSearching = ({ results, showChapters }) => {
     return (
         <div className="container my-5">
             <div className="row row-cols-4">
-                {books.map((book, index) => (
-                    <Book key={index} data={book} showChapters={showChapters} />
-                ))}
+                {results.length > 0 ? (
+                    results.map((book, index) => (
+                        <Book key={index} data={book} showChapters={showChapters} />
+                    ))
+                ) : (
+                    <p>Không có truyện nào tìm thấy.</p>
+                )}
             </div>
         </div>
     );
