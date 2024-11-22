@@ -22,14 +22,17 @@ function ViewChapter() {
   const location = useLocation();
   const rowCount = location.state?.rowCount || 0;
 
-  console.log(rowCount);
   const synth = window.speechSynthesis;
   let utteranceQueue = [];
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("accountId");
     setUserId(storedUserId);
-  }, []);
+
+    axios.put(`http://localhost:3001/chapters/${chapterId}/increment-view`) 
+    .then(response => { console.log('View count updated:', response.data); }) 
+    .catch(error => { console.error('Error incrementing view count:', error); });
+  }, [chapterId]);
 
   useEffect(() => {
     axios.get(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}`)
@@ -57,6 +60,18 @@ function ViewChapter() {
     }
   }, [rowCount, paragraphs]);
 
+  const updateReadingProgress = async (chapterId, countRow) => {
+    try {
+      await axios.put(`http://localhost:3001/users/${userId}/stories/${storyId}/reading-chapter`, {
+        chapterId,
+        countRow
+      });
+      console.log('Tiến trình đọc đã được cập nhật');
+    } catch (error) {
+      console.error('Lỗi khi cập nhật tiến trình đọc:', error);
+    }
+  };
+
   const toggleDropdown = () => {
     if (!isDropdownOpen) {
       axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
@@ -73,10 +88,13 @@ function ViewChapter() {
   };
 
   const navigateToChapter = (chapterId) => {
-    setCurrentParagraphIndex(0); // Reset the paragraph index
-    setIsSpeaking(false); // Stop the current speech
+    setCurrentParagraphIndex(0); // Đặt lại chỉ số đoạn văn
+    setIsSpeaking(false); // Dừng phát giọng nói hiện tại
     navigate(`/stories/${storyId}/chapters/${chapterId}`);
     window.scrollTo(0, 0);
+  
+    // Cập nhật tiến trình đọc
+    updateReadingProgress(chapterId, 0); // Bắt đầu từ đầu (0 hàng đã đọc)
   };
 
   const getButtonClass = (isDisabled) => {
@@ -85,7 +103,7 @@ function ViewChapter() {
 
   const handleReadChapter = () => {
     if (!paragraphs.length) return;
-
+  
     utteranceQueue = paragraphs.slice(currentParagraphIndex).map((text, index) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'vi-VN';
@@ -96,11 +114,14 @@ function ViewChapter() {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
           setCurrentParagraphIndex(currentParagraphIndex + index);
+  
+          // Cập nhật tiến trình đọc khi người dùng đọc
+          updateReadingProgress(chapterId, currentParagraphIndex + index + 1); // Cập nhật countRow
         }
       };
       return utterance;
     });
-
+  
     utteranceQueue.forEach(utterance => synth.speak(utterance));
     setIsSpeaking(true);
   };
@@ -115,6 +136,29 @@ function ViewChapter() {
   };
 
   const { chapter, previousId, nextId } = chapterData;
+
+  // Theo dõi sự kiện cuộn để cập nhật tiến trình đọc
+  useEffect(() => {
+    const handleScroll = () => {
+      const visibleParagraphIndex = paragraphRefs.current.findIndex((ref, index) => {
+        if (!ref) return false;
+        const rect = ref.getBoundingClientRect();
+        // Kiểm tra nếu đoạn văn đang nằm trong vùng nhìn thấy (từ trên xuống dưới)
+        return rect.top >= 0 && rect.top <= window.innerHeight;
+      });
+
+      if (visibleParagraphIndex !== -1 && visibleParagraphIndex !== currentParagraphIndex) {
+        setCurrentParagraphIndex(visibleParagraphIndex);
+        updateReadingProgress(chapterId, visibleParagraphIndex + 1); // Cập nhật tiến trình đọc
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [currentParagraphIndex, chapterId]);
 
   if (!chapter) {
     return <div>Loading...</div>;
