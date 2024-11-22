@@ -5,6 +5,7 @@ import './viewchapter.css';
 import Header from '../../../layouts/header/User/header.jsx';
 import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
+import Comment from './CommentSection.jsx';
 
 function ViewChapter() {
   const { chapterId, storyId } = useParams();
@@ -13,8 +14,6 @@ function ViewChapter() {
   const [chapters, setChapters] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [story, setStory] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
   const [userId, setUserId] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [paragraphs, setParagraphs] = useState([]);
@@ -41,18 +40,6 @@ function ViewChapter() {
       })
       .catch(error => {
         console.error('Error fetching chapter:', error);
-      });
-
-    axios.get(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}/comments`)
-      .then(response => {
-        if (response.data && Array.isArray(response.data.comments)) {
-          setComments(response.data.comments);
-        } else {
-          setComments([]);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching comments:', error);
       });
 
     axios.get(`http://localhost:3001/stories/${storyId}`)
@@ -83,20 +70,6 @@ function ViewChapter() {
     } else {
       setIsDropdownOpen(false);
     }
-  };
-
-  const handleCommentSubmit = () => {
-    axios.post(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}/comments`, {
-      content: newComment,
-      accountId: userId
-    })
-      .then(response => {
-        setComments([...comments, response.data.comment]);
-        setNewComment('');
-      })
-      .catch(error => {
-        console.error('Lỗi khi đăng bình luận:', error);
-      });
   };
 
   const navigateToChapter = (chapterId) => {
@@ -265,36 +238,7 @@ function ViewChapter() {
           Chương tiếp
         </button>
       </div>
-      <div className="comment-section">
-        <h3>Comments</h3>
-        <div className="comments-list">
-          {comments.map((comment, index) => (
-            <div key={index} className="comment">
-              <div className="comment-header">
-                {comment.user.image && (
-                  <img
-                    src={comment.user.image}
-                    alt="User Avatar"
-                    className="comment-user-image"
-                  />
-                )}
-                <strong>{comment.user.username}</strong>
-                <span>  {comment.message}</span>
-                <span> - {new Date(comment.created_at).toLocaleString()}</span>
-              </div>
-              <p>{comment.content}</p>
-            </div>
-          ))}
-        </div>
-        <div className="comment-input">
-          <textarea
-            placeholder="Add a comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <button onClick={handleCommentSubmit}>Submit</button>
-        </div>
-      </div>
+      <Comment />
       <Footer />
     </div>
   );

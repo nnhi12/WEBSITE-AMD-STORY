@@ -262,7 +262,7 @@ app.get('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
 
         const comments = chapter.comments;
         const commentsWithUserInfo = await Promise.all(comments.map(async (comment) => {
-            const user = await userModel.findOne({ comments: comment._id }); // Tìm người dùng theo userId trong bình luận
+        const user = await userModel.findOne({ comments: comment._id }); // Tìm người dùng theo userId trong bình luận
             if (user) {
                 // Convert image Buffer to base64 (nếu có hình ảnh)
                 const imageBase64 = user.image ? `data:image/jpeg;base64,${user.image.toString('base64')}` : null;
@@ -657,17 +657,25 @@ app.get('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) =
       const { accountId, storyId } = req.params;
       const { chapterId, countRow } = req.body;
   
+      // Kiểm tra xem tài khoản có tồn tại không
       const account = await accountModel.findById(accountId);
       if (!account) {
         return res.status(404).json({ message: "Account not found" });
       }
   
+      // Tìm người dùng từ tài khoản
       const user = await userModel.findOne({ account: accountId });
+      
+      // Kiểm tra xem storyId có trong danh sách story_reading của người dùng không
+      if (!user.story_reading.includes(storyId)) {
+        return res.status(400).json({ message: "Story is not in the reading list" });
+      }
   
+      // Cập nhật hoặc thêm mới record trong readingchapterModel
       const record = await readingchapterModel.findOneAndUpdate(
         { user_id: user._id, story_id: storyId },
         { chapter_id: chapterId, count_row: countRow },
-        { new: true, upsert: true } // Update or insert if not exists
+        { new: true, upsert: true } // Cập nhật hoặc chèn nếu không tồn tại
       );
   
       res.json({ message: 'Reading progress updated successfully', record });
@@ -676,6 +684,7 @@ app.get('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) =
       res.status(500).send('Server error');
     }
   });
+  
   
 
 app.listen(3001, () => {
