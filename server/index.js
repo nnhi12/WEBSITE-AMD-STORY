@@ -2,7 +2,6 @@ const express = require('express');
 const connectDB = require('./utils/connect.js');
 const cors = require('cors');
 const multer = require("multer");
-const testModel = require('./models/Test.js');
 const storyModel = require('./models/Story.js')
 
 const accountModel = require('./models/Account.js');
@@ -262,7 +261,7 @@ app.get('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
 
         const comments = chapter.comments;
         const commentsWithUserInfo = await Promise.all(comments.map(async (comment) => {
-        const user = await userModel.findOne({ comments: comment._id }); // Tìm người dùng theo userId trong bình luận
+            const user = await userModel.findOne({ comments: comment._id }); // Tìm người dùng theo userId trong bình luận
             if (user) {
                 // Convert image Buffer to base64 (nếu có hình ảnh)
                 const imageBase64 = user.image ? `data:image/jpeg;base64,${user.image.toString('base64')}` : null;
@@ -490,7 +489,7 @@ app.post('/add-to-reading-list', async (req, res) => {
             res.status(404).json({ message: 'User not found.' });
         }
 
-        
+
 
     } catch (error) {
         res.status(500).json({ message: 'Error adding story to reading list.', error });
@@ -552,15 +551,19 @@ app.post('/remove-from-reading-list', async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
     try {
-        // Find the user and remove the story from the following list
+        // Xóa truyện khỏi danh sách đọc của người dùng
         await userModel.findByIdAndUpdate(user._id, { $pull: { story_reading: storyId } });
+        // Xóa người dùng khỏi danh sách đọc của truyện
         await storyModel.findByIdAndUpdate(storyId, { $pull: { user_reading: user._id } });
+        // Xóa các bản ghi trong readingchapter có story_id tương ứng
+        await readingchapterModel.deleteMany({ story_id: storyId });
 
-        res.status(200).json({ message: 'Story removed from reading list successfully.' });
+        res.status(200).json({ message: 'Story removed from reading list and related records in readingchapter deleted successfully.' });
     } catch (error) {
         res.status(500).json({ message: 'Error removing story from reading list.', error });
     }
 });
+
 
 app.post("/reset-password", async (req, res) => {
     const { email, newPassword } = req.body;
@@ -593,29 +596,29 @@ app.post("/reset-password", async (req, res) => {
 //first
 app.get('/stories/:storyId/first', async (req, res) => {
     try {
-      const story = await storyModel.findById(req.params.storyId).populate('chapters');
-  
-      if (!story) {
-        return res.status(404).send('Story not found');
-      }
-  
-      if (!story.chapters || story.chapters.length === 0) {
-        return res.status(404).send('No chapters found for this story');
-      }
-  
-      // Ensure chapters are populated correctly
-      const firstChapter = story.chapters[0];
-      if (!firstChapter) {
-        return res.status(404).send('First chapter not found');
-      }
-  
-      res.json(firstChapter);
+        const story = await storyModel.findById(req.params.storyId).populate('chapters');
+
+        if (!story) {
+            return res.status(404).send('Story not found');
+        }
+
+        if (!story.chapters || story.chapters.length === 0) {
+            return res.status(404).send('No chapters found for this story');
+        }
+
+        // Ensure chapters are populated correctly
+        const firstChapter = story.chapters[0];
+        if (!firstChapter) {
+            return res.status(404).send('First chapter not found');
+        }
+
+        res.json(firstChapter);
     } catch (err) {
-      console.error('Error fetching first chapter:', err);
-      res.status(500).send('Server error');
+        console.error('Error fetching first chapter:', err);
+        res.status(500).send('Server error');
     }
-  });
-  
+});
+
 
 app.get('/stories/:storyId/latest', async (req, res) => {
     try {
@@ -635,56 +638,96 @@ app.get('/stories/:storyId/latest', async (req, res) => {
 ///đánh dấu chapter đang đọc
 app.get('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) => {
     try {
-      const { accountId, storyId } = req.params;
-      const account = await accountModel.findById(accountId);
-      if (!account) {
-        return res.status(404).json({ message: "Account not found" });
-      }
-      const user = await userModel.findOne({ account: accountId });
-      const record = await readingchapterModel.findOne({ user_id: user._id, story_id: storyId }).populate('chapter_id');
-      if (!record) {
-        return res.json({ chapter: null, count_row: 0 }); // No reading progress
-      }
-      res.json({ chapter: record.chapter_id, count_row: record.count_row }); // Current reading progress
+        const { accountId, storyId } = req.params;
+        const account = await accountModel.findById(accountId);
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+        const user = await userModel.findOne({ account: accountId });
+        const record = await readingchapterModel.findOne({ user_id: user._id, story_id: storyId }).populate('chapter_id');
+        if (!record) {
+            return res.json({ chapter: null, count_row: 0 }); // No reading progress
+        }
+        res.json({ chapter: record.chapter_id, count_row: record.count_row }); // Current reading progress
     } catch (err) {
-      console.error('Error fetching reading chapter:', err);
-      res.status(500).send('Server error');
+        console.error('Error fetching reading chapter:', err);
+        res.status(500).send('Server error');
     }
-  });
-  
-  app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) => {
+});
+
+app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) => {
     try {
-      const { accountId, storyId } = req.params;
-      const { chapterId, countRow } = req.body;
-  
-      // Kiểm tra xem tài khoản có tồn tại không
-      const account = await accountModel.findById(accountId);
-      if (!account) {
-        return res.status(404).json({ message: "Account not found" });
-      }
-  
-      // Tìm người dùng từ tài khoản
-      const user = await userModel.findOne({ account: accountId });
-      
-      // Kiểm tra xem storyId có trong danh sách story_reading của người dùng không
-      if (!user.story_reading.includes(storyId)) {
-        return res.status(400).json({ message: "Story is not in the reading list" });
-      }
-  
-      // Cập nhật hoặc thêm mới record trong readingchapterModel
-      const record = await readingchapterModel.findOneAndUpdate(
-        { user_id: user._id, story_id: storyId },
-        { chapter_id: chapterId, count_row: countRow },
-        { new: true, upsert: true } // Cập nhật hoặc chèn nếu không tồn tại
-      );
-  
-      res.json({ message: 'Reading progress updated successfully', record });
+        const { accountId, storyId } = req.params;
+        const { chapterId, countRow } = req.body;
+
+        // Kiểm tra xem tài khoản có tồn tại không
+        const account = await accountModel.findById(accountId);
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+
+        // Tìm người dùng từ tài khoản
+        const user = await userModel.findOne({ account: accountId });
+
+        // Kiểm tra xem storyId có trong danh sách story_reading của người dùng không
+        if (!user.story_reading.includes(storyId)) {
+            return res.status(400).json({ message: "Story is not in the reading list" });
+        }
+
+        // Cập nhật hoặc thêm mới record trong readingchapterModel
+        const record = await readingchapterModel.findOneAndUpdate(
+            { user_id: user._id, story_id: storyId },
+            { chapter_id: chapterId, count_row: countRow },
+            { new: true, upsert: true } // Cập nhật hoặc chèn nếu không tồn tại
+        );
+
+        res.json({ message: 'Reading progress updated successfully', record });
     } catch (err) {
-      console.error('Error updating reading chapter:', err);
-      res.status(500).send('Server error');
+        console.error('Error updating reading chapter:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+
+//tinh view
+app.put('/chapters/:chapterId/increment-view', async (req, res) => {
+    const { chapterId } = req.params;
+  
+    try {
+      // Find the chapter and increment the view count
+      const chapter = await chapterModel.findById(chapterId);
+  
+      if (!chapter) {
+        return res.status(404).json({ message: 'Chương không tồn tại' });
+      }
+  
+      chapter.view += 1; // Increment the view count
+      await chapter.save(); // Save the changes to the database
+  
+      // Find the story from the chapter
+      const story = await storyModel.findOne({ chapters: chapterId });
+      if (!story) {
+        return res.status(404).json({ message: 'Truyện không tồn tại' });
+      }
+  
+      // Calculate the total views of all chapters in the story
+      const totalViews = await chapterModel.aggregate([
+        { $match: { _id: { $in: story.chapters } } },
+        { $group: { _id: null, totalViews: { $sum: '$view' } } }
+      ]);
+  
+      // Update the story's view count
+      story.view = totalViews[0]?.totalViews || 0;
+      story.updated_at = new Date(); // Update the timestamp
+  
+      await story.save(); // Save the changes to the story
+  
+      res.status(200).json({ message: 'Số lượt xem của chapter và story đã được cập nhật', chapter, story });
+    } catch (error) {
+      console.error('Lỗi khi cập nhật số lượt xem:', error);
+      res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
   });
-  
   
 
 app.listen(3001, () => {
