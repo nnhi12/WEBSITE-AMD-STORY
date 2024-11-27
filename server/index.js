@@ -714,37 +714,88 @@ app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) =
 });
 
 ////thanh tiến trình chưa done
-app.get('/get-reading-progress', async (req, res) => {
-    const { accountId, storyId } = req.params;
+app.get('/users/:accountId/get-reading-progress', async (req, res) => {
+    const { accountId } = req.params;
+    try {
+        // Tìm tài khoản
         const account = await accountModel.findById(accountId);
         if (!account) {
             return res.status(404).json({ message: "Account not found" });
         }
+
+        // Tìm người dùng liên kết với tài khoản
         const user = await userModel.findOne({ account: accountId });
-    try {
-        // Lấy chapter hiện tại người dùng đang đọc
-        const readingData = await readingchapterModel.findOne({ user_id: userId }).sort({ updated_at: -1 }); // Lấy dữ liệu mới nhất
-        if (!readingData) return res.status(404).json({ message: 'No reading data found for this user' });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-        const currentChapterId = readingData.chapter_id[0]; // Lấy chapter hiện tại
-        const storyId = readingData.story_id[0]; // Lấy ID của câu chuyện
+        // Lấy tất cả reading data của người dùng
+        const readingDataList = await readingchapterModel.find({ user_id: user._id }).sort({ updated_at: -1 });
 
-        // Lấy story để lấy tổng số chapters
-        const story = await storyModel.findById(storyId).populate('chapters');
-        if (!story) return res.status(404).json({ message: 'Story not found' });
+        if (!readingDataList || readingDataList.length === 0) {
+            return res.status(404).json({ message: 'No reading data found for this user' });
+        }
 
-        // Tính tiến trình
-        const totalChapters = story.chapters.length;
-        const currentChapterIndex = story.chapters.findIndex(chapter => chapter._id.toString() === currentChapterId.toString());
+        const progressList = [];
 
-        // Tính tiến trình phần trăm
-        const progress = (currentChapterIndex + 1) / totalChapters * 100;
+        for (const readingData of readingDataList) {
+            const currentChapterId = readingData.chapter_id[0];
+            const storyId = readingData.story_id[0];
 
-        // Trả về kết quả
-        res.json({ progress: progress.toFixed(2) });
+            // Lấy thông tin truyện
+            const story = await storyModel.findById(storyId).populate('chapters');
+            if (!story) continue; // Bỏ qua nếu không tìm thấy truyện
+
+            const totalChapters = story.chapters.length;
+            const currentChapterIndex = story.chapters.findIndex(chapter => chapter._id.toString() === currentChapterId.toString());
+
+            // Tính tiến trình
+            const progress = ((currentChapterIndex + 1) / totalChapters) * 100;
+
+            progressList.push({
+                storyId: story._id,
+                storyTitle: story.title,
+                progress: progress.toFixed(2),
+            });
+        }
+
+        // Trả về danh sách tiến trình
+        res.json(progressList);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error calculating reading progress' });
+    }
+});
+
+app.put('/chapters/:chapterId/increment-view', async (req, res) => {
+    const { chapterId } = req.params;
+    try {
+        // Find the chapter and increment the view count
+        const chapter = await chapterModel.findById(chapterId);
+        if (!chapter) {
+            return res.status(404).json({ message: 'Chương không tồn tại' });
+        }
+        chapter.view += 1; // Increment the view count
+        await chapter.save(); // Save the changes to the database
+
+        // Find the story from the chapter
+        const story = await storyModel.findOne({ chapters: chapterId });
+        if (!story) {
+            return res.status(404).json({ message: 'Truyện không tồn tại' });
+        }
+        const totalViews = await chapterModel.aggregate([
+            { $match: { _id: { $in: story.chapters } } },
+            { $group: { _id: null, totalViews: { $sum: '$view' } } }
+        ]);
+        story.view = totalViews[0]?.totalViews || 0;
+        story.updated_at = new Date(); // Update the timestamp
+
+        await story.save(); // Save the changes to the story
+
+        res.status(200).json({ message: 'Số lượt xem của chapter và story đã được cập nhật', chapter, story });
+    } catch (error) {
+        console.error('Lỗi khi cập nhật số lượt xem:', error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 });
 
