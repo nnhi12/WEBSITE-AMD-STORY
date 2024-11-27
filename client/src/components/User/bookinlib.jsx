@@ -24,7 +24,6 @@ class Book extends Component {
   handleOptionClick = (option) => {
     const { data, userId, onBookRemoved } = this.props;
     if (option === 'removeFromList') {
-      // Hiển thị hộp thoại xác nhận trước khi xóa
       Swal.fire({
         title: 'Bạn chắc chắn muốn xóa?',
         text: 'Truyện này sẽ bị xóa khỏi danh sách của bạn.',
@@ -34,7 +33,6 @@ class Book extends Component {
         cancelButtonText: 'No, giữ lại',
       }).then((result) => {
         if (result.isConfirmed) {
-          // Nếu người dùng nhấn Yes, tiếp tục xóa
           axios
             .post('http://localhost:3001/remove-from-reading-list', {
               accountId: userId,
@@ -43,7 +41,6 @@ class Book extends Component {
             .then((response) => {
               if (response.data.message) {
                 console.log(response.data.message);
-                // Gọi hàm callback để cập nhật lại danh sách truyện
                 onBookRemoved(data._id);
               }
             })
@@ -72,19 +69,27 @@ class Book extends Component {
   }
 
   render() {
-    const { data, showChapters } = this.props;
+    const { data, showChapters, progressList } = this.props;
     const { isContextMenuOpen, contextMenuPosition } = this.state;
     const imageSrc = data.image ? `data:image/jpeg;base64,${data.image}` : '';
+
+    // Kiểm tra `progressList` tồn tại và tìm progress
+    const storyProgress = Array.isArray(progressList)
+      ? progressList.find((item) => item.storyId === data._id)
+      : null;
+
+    const progressValue = storyProgress ? parseFloat(storyProgress.progress) : 0;
 
     return (
       <div 
         className="col text-center mb-4"
-        onContextMenu={this.handleContextMenu} // Bắt sự kiện chuột phải
+        onContextMenu={this.handleContextMenu}
       >
         <Link to={`/storyinfo/${data._id}`} className="u-text-decoration-none u-text-dark">
           <img src={imageSrc} alt={data.name} className="img-fluid u-book-image" />
           <p className="u-book-title mt-2">{data.name}</p>
         </Link>
+
         {showChapters && data.chapters && (
           <ul className="fav-chapter-list mt-2">
             {data.chapters.slice(0, 2).map((chapter, index) => (
@@ -100,7 +105,21 @@ class Book extends Component {
           </ul>
         )}
 
-        {/* Context Menu */}
+        {/* Thanh tiến trình */}
+        <div className="progress mt-2" style={{ height: '8px' }}>
+          <div
+            className="progress-bar"
+            role="progressbar"
+            style={{
+              width: `${progressValue}%`,
+              backgroundColor: progressValue > 0 ? '#007bff' : '#e0e0e0',
+            }}
+            aria-valuenow={progressValue}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          ></div>
+        </div>
+
         {isContextMenuOpen && (
           <div 
             className="custom-context-menu"

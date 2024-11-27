@@ -4,21 +4,30 @@ import Book from './bookinlib';
 
 const ListReading = ({ userId, showChapters }) => {
   const [books, setBooks] = useState([]);
+  const [progressList, setProgressList] = useState([]); // Thêm state cho progressList
 
   useEffect(() => {
     if (userId) {
-      console.log('Using User ID:', userId);
+      // Lấy danh sách truyện
       axios.get(`http://localhost:3001/users/${userId}/readingstories`)
         .then(response => {
-          console.log('Fetched books:', response.data);
           setBooks(response.data);
         })
         .catch(error => {
           console.error('Error fetching books:', error);
         });
+
+      // Lấy danh sách progress
+      axios.get(`http://localhost:3001/users/${userId}/get-reading-progress`)
+        .then(response => {
+          setProgressList(response.data); // Lưu danh sách progress vào state
+        })
+        .catch(error => {
+          console.error('Error fetching progress:', error);
+        });
     }
   }, [userId]);
-  
+
   const handleBookRemoved = (removedBookId) => {
     setBooks(books.filter(book => book._id !== removedBookId));
   };
@@ -32,7 +41,8 @@ const ListReading = ({ userId, showChapters }) => {
             data={book} 
             userId={userId} 
             showChapters={showChapters} 
-            onBookRemoved={handleBookRemoved} // Truyền hàm callback vào component Book
+            onBookRemoved={handleBookRemoved} 
+            progressList={progressList} // Truyền progressList xuống component Book
           />
         )) : (
           <p>No reading stories found.</p>
