@@ -83,7 +83,6 @@ const Header = ({ onSearch }) => {
         </div>
         <div className="u-nav-links">
           <a href="#" onClick={handleLibraryClick}>Library</a>
-          <a href="#options">Options</a>
           {username ? (
             <div className="abc-button" onClick={toggleDropdown}>
               {username}

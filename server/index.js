@@ -104,12 +104,37 @@ app.post("/register", async (req, res) => {
 
 app.get("/stories", async (req, res) => {
     try {
-        const stories = await storyModel.find();
+        const { minChapters, maxChapters } = req.query;
+
+        // Xây dựng bộ lọc
+        const filter = {};
+        if (minChapters) filter.chapterCount = { $gte: parseInt(minChapters) };
+        if (maxChapters) filter.chapterCount = { ...filter.chapterCount, $lte: parseInt(maxChapters) };
+
+        // Tính số lượng chapters
+        const stories = await storyModel.aggregate([
+            {
+                $lookup: {
+                    from: 'chapters', // Collection chứa chapters
+                    localField: 'chapters', // Liên kết giữa story và chapter
+                    foreignField: '_id',
+                    as: 'chapterDetails'
+                }
+            },
+            {
+                $addFields: {
+                    chapterCount: { $size: '$chapterDetails' } // Thêm trường chapterCount
+                }
+            },
+            {
+                $match: filter // Lọc theo chapterCount
+            }
+        ]);
 
         // Chuyển đổi Buffer hình ảnh sang Base64
         const modifiedStories = stories.map(story => ({
-            ...story._doc,
-            image: story.image ? story.image.toString('base64') : null,
+            ...story,
+            image: story.image ? story.image.toString('base64') : null, // Chuyển đổi hình ảnh
         }));
 
         res.json(modifiedStories);
@@ -117,8 +142,8 @@ app.get("/stories", async (req, res) => {
         console.error('Error fetching stories:', error);
         res.status(500).send('Error fetching stories');
     }
-}
-)
+});
+
 
 app.get("/searchstory", async (req, res) => {
     const query = req.query.name; // Lấy từ khóa tìm kiếm từ query string
@@ -688,47 +713,40 @@ app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) =
     }
 });
 
-
-//tinh view
-app.put('/chapters/:chapterId/increment-view', async (req, res) => {
-    const { chapterId } = req.params;
-  
+////thanh tiến trình chưa done
+app.get('/get-reading-progress', async (req, res) => {
+    const { accountId, storyId } = req.params;
+        const account = await accountModel.findById(accountId);
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+        const user = await userModel.findOne({ account: accountId });
     try {
-      // Find the chapter and increment the view count
-      const chapter = await chapterModel.findById(chapterId);
-  
-      if (!chapter) {
-        return res.status(404).json({ message: 'Chương không tồn tại' });
-      }
-  
-      chapter.view += 1; // Increment the view count
-      await chapter.save(); // Save the changes to the database
-  
-      // Find the story from the chapter
-      const story = await storyModel.findOne({ chapters: chapterId });
-      if (!story) {
-        return res.status(404).json({ message: 'Truyện không tồn tại' });
-      }
-  
-      // Calculate the total views of all chapters in the story
-      const totalViews = await chapterModel.aggregate([
-        { $match: { _id: { $in: story.chapters } } },
-        { $group: { _id: null, totalViews: { $sum: '$view' } } }
-      ]);
-  
-      // Update the story's view count
-      story.view = totalViews[0]?.totalViews || 0;
-      story.updated_at = new Date(); // Update the timestamp
-  
-      await story.save(); // Save the changes to the story
-  
-      res.status(200).json({ message: 'Số lượt xem của chapter và story đã được cập nhật', chapter, story });
-    } catch (error) {
-      console.error('Lỗi khi cập nhật số lượt xem:', error);
-      res.status(500).json({ message: 'Lỗi server', error: error.message });
+        // Lấy chapter hiện tại người dùng đang đọc
+        const readingData = await readingchapterModel.findOne({ user_id: userId }).sort({ updated_at: -1 }); // Lấy dữ liệu mới nhất
+        if (!readingData) return res.status(404).json({ message: 'No reading data found for this user' });
+
+        const currentChapterId = readingData.chapter_id[0]; // Lấy chapter hiện tại
+        const storyId = readingData.story_id[0]; // Lấy ID của câu chuyện
+
+        // Lấy story để lấy tổng số chapters
+        const story = await storyModel.findById(storyId).populate('chapters');
+        if (!story) return res.status(404).json({ message: 'Story not found' });
+
+        // Tính tiến trình
+        const totalChapters = story.chapters.length;
+        const currentChapterIndex = story.chapters.findIndex(chapter => chapter._id.toString() === currentChapterId.toString());
+
+        // Tính tiến trình phần trăm
+        const progress = (currentChapterIndex + 1) / totalChapters * 100;
+
+        // Trả về kết quả
+        res.json({ progress: progress.toFixed(2) });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error calculating reading progress' });
     }
-  });
-  
+});
 
 app.listen(3001, () => {
     console.log('Success!');

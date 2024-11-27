@@ -22,12 +22,24 @@ class Book extends Component {
   };
 
   handleOptionClick = (option) => {
-    const { data, userId } = this.props;
+    const { data } = this.props;
+    const userId = localStorage.getItem("accountId"); // Lấy accountId từ localStorage
+
+    // Kiểm tra nếu chưa đăng nhập
+    if (!userId) {
+      Swal.fire({
+        title: 'Bạn cần đăng nhập',
+        text: 'Bạn cần đăng nhập để thực hiện hành động này.',
+        icon: 'warning',
+        confirmButtonText: 'OK',
+      });
+      this.setState({ isContextMenuOpen: false }); // Đóng menu sau khi yêu cầu đăng nhập
+      return; // Ngừng xử lý nếu chưa đăng nhập
+    }
 
     if (option === 'follow') {
       console.log(`Add to following list: ${data.name}`);
 
-      // Check if the user has already followed the story
       axios
         .post('http://localhost:3001/add-to-follow-list', {
           accountId: userId,
@@ -35,7 +47,6 @@ class Book extends Component {
         })
         .then((response) => {
           if (response.data.message) {
-            // Display success message
             Swal.fire({
               title: 'Thành công!',
               text: 'Đã thêm vào danh sách theo dõi',
@@ -45,7 +56,6 @@ class Book extends Component {
           }
         })
         .catch((error) => {
-          // If the error is that the story has already been followed
           Swal.fire({
             title: 'Lỗi!',
             text: 'Bạn đã theo dõi truyện này rồi',
@@ -57,7 +67,6 @@ class Book extends Component {
     } else if (option === 'addToList') {
       console.log(`Add to reading list: ${data.name}`);
 
-      // Check if the user has already added the story to the reading list
       axios
         .post('http://localhost:3001/add-to-reading-list', {
           accountId: userId,
@@ -65,7 +74,6 @@ class Book extends Component {
         })
         .then((response) => {
           if (response.data.message) {
-            // Display success message
             Swal.fire({
               title: 'Thành công!',
               text: 'Đã thêm vào danh sách đọc',
@@ -75,9 +83,8 @@ class Book extends Component {
           }
         })
         .catch((error) => {
-          // If the error is that the story has already been added
           Swal.fire({
-            title: '',
+            title: 'Lỗi!',
             text: 'Bạn đã lưu truyện này rồi',
             icon: 'error',
             confirmButtonText: 'Đóng',
@@ -86,7 +93,7 @@ class Book extends Component {
         });
     }
 
-    this.setState({ isContextMenuOpen: false }); // Close menu after selection
+    this.setState({ isContextMenuOpen: false }); // Đóng menu sau khi chọn một hành động
   };
 
   handleClickOutside = (event) => {
@@ -111,7 +118,7 @@ class Book extends Component {
     return (
       <div 
         className="col text-center mb-4"
-        onContextMenu={this.handleContextMenu} // Attach right-click handler
+        onContextMenu={this.handleContextMenu} // Bắt sự kiện chuột phải
       >
         <Link to={`/storyinfo/${data._id}`} className="u-text-decoration-none u-text-dark">
           <img src={imageSrc} alt={data.name} className="img-fluid u-book-image" />
@@ -132,7 +139,7 @@ class Book extends Component {
           </ul>
         )}
 
-        {/* Custom Context Menu */}
+        {/* Context Menu */}
         {isContextMenuOpen && (
           <div 
             className="custom-context-menu"
