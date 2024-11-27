@@ -1,8 +1,12 @@
-/* src/Header.css */
 .u-header {
-    background-color: black;
-    color: white;
-    padding: 10px;
+  background-color: black;
+  color: white;
+  padding: 10px;
+  position: sticky; /* Giữ header cố định ở phía trên */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; 
   }
   
   .u-top-bar {

@@ -53,9 +53,9 @@ const Navbar = () => {
       <div className="u-genre-dropdown">
         <button className="u-genre-dropbtn">Classified by Chapter</button>
         <div className="u-genre-dropdown-content">
-          <a href="/classifiedbychapter">More than 500</a>
-          <a href="/classifiedbychapter">Between 100 and 500</a>
-          <a href="/classifiedbychapter">Less than 100</a>
+          <a href="/classifiedbychapter?minChapters=500">More than 500</a>
+          <a href="/classifiedbychapter?minChapters=100&maxChapters=500">Between 100 and 500</a>
+          <a href="/classifiedbychapter?maxChapters=100">Less than 100</a>
         </div>
       </div>
       <a href="/tophot">Novel HOT</a>
