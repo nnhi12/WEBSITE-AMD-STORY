@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios';
 import HomePage from './pages/User/HomePage/HomePage'
 import StoryInfo from './pages/User/StoryInformation/StoryInforPage'
 import ChapterView from './pages/User/ViewChapter/viewchapter'
@@ -14,9 +13,9 @@ import AboutUs from './pages/User/AboutUs/AboutUsPage'
 import SearchPage from './pages/User/SearchResult/SearchResult'
 import UserInfo from './pages/User/UserInformation/UserInformationPage'
 import ForgotPassword from './pages/Main/ForgotPassword/ForgotPassword'
+import Payment from './pages/User/Payment/Payment'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
 function App() {
-  const [count, setCount] = useState(0)
   
   return (
     <div>
@@ -35,6 +34,7 @@ function App() {
             <Route path = '/aboutus' element = {<AboutUs />}> </Route>
             <Route path = '/searchresult' element = {<SearchPage />}> </Route>
             <Route path = '/userinfo' element = {<UserInfo />}> </Route>
+            <Route path = '/payment' element = {<Payment />}> </Route>
             <Route path = '/forgot-password' element = {<ForgotPassword />}> </Route>
           </Routes>
         </BrowserRouter>

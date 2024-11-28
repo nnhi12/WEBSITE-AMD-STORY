@@ -12,6 +12,7 @@ const chapterModel = require('./models/Chapter.js');
 const commentModel = require('./models/Comment.js');
 const readingchapterModel = require('./models/Readingchapter.js');
 
+
 const app = express();
 
 app.use(express.json());
@@ -805,6 +806,59 @@ app.put('/chapters/:chapterId/increment-view', async (req, res) => {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 });
+
+
+//dang ky vip
+app.post('/update-status', async (req, res) => {
+    const accountId = req.body.accountId; // Lấy ID tài khoản từ body request
+    
+    try {
+        // Tìm tài khoản theo ID
+        const account = await accountModel.findById(accountId);
+
+        if (!account) {
+            return res.status(404).json({ message: 'Tài khoản không tồn tại.' });
+        }
+
+        const oldStatus = account.status;
+        // Cập nhật status
+        const updatedStatus = !account.status; // Đổi trạng thái
+        account.status = updatedStatus;
+
+        // Lưu thay đổi
+        await account.save();
+
+        return res.status(200).json({
+            message: `Trạng thái tài khoản đã được cập nhật thành công.`,
+            newStatus: updatedStatus
+        });
+    } catch (error) {
+        console.error('Lỗi khi cập nhật trạng thái:', error);
+        res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật trạng thái.' });
+    }
+});
+
+
+app.get('/account-status', async (req, res) => {
+    const accountId = req.query.accountId; // Lấy ID tài khoản từ query params
+    
+    try {
+        // Tìm tài khoản theo ID
+        const account = await accountModel.findById(accountId);
+
+        if (!account) {
+            return res.status(404).json({ message: 'Tài khoản không tồn tại.' });
+        }
+
+        return res.status(200).json({
+            status: account.status
+        });
+    } catch (error) {
+        console.error('Lỗi khi lấy trạng thái:', error);
+        res.status(500).json({ message: 'Đã xảy ra lỗi khi lấy trạng thái tài khoản.' });
+    }
+});
+
 
 app.listen(3001, () => {
     console.log('Success!');

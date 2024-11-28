@@ -17,3 +17,14 @@
   text-decoration: none;
   color: black; /* giữ màu sắc hoặc thay đổi theo ý muốn */
 }
+
+.locked-chapter a {
+  color: #999; /* Màu nhạt hơn cho chapter bị khóa */
+  pointer-events: none; /* Không cho phép click vào */
+}
+
+.vip-icon {
+  margin-left: 8px;
+  color: gold;
+  font-size: 1.2em;
+}
