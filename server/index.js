@@ -80,7 +80,13 @@ app.post("/register", async (req, res) => {
             return res.status(400).json({ message: "Username already exists. Please choose a different username." });
         }
 
-        // Nếu username chưa tồn tại, tiến hành tạo tài khoản và user mới
+        // Kiểm tra xem email đã tồn tại chưa
+        const existingEmail = await userModel.findOne({ email });
+        if (existingEmail) {
+            return res.status(400).json({ message: "Email already exists. Please use a different email." });
+        }
+
+        // Nếu username và email chưa tồn tại, tiến hành tạo tài khoản và user mới
         const account = await accountModel.create({
             username,
             password,
@@ -100,6 +106,7 @@ app.post("/register", async (req, res) => {
         res.status(500).json({ message: "An error occurred during registration. Please try again later." });
     }
 });
+
 
 
 app.get("/stories", async (req, res) => {

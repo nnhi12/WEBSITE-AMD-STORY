@@ -155,3 +155,20 @@
       width: 100%;
   }
 }
+
+.password-length-warning {
+  color: white;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.password-match-check {
+  color: green;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.register-button:disabled {
+  background-color: grey;
+  cursor: not-allowed;
+}
