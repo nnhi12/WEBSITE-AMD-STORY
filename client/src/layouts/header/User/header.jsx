@@ -61,6 +61,22 @@ const Header = ({ onSearch }) => {
     }
   };
 
+  const handleVIPClick = () => {
+    const username = localStorage.getItem('username');
+    if (!username) {
+      // User is not logged in, show SweetAlert2 notification
+      Swal.fire({
+        title: 'Please log in',
+        text: 'You need to be logged in to be a VIP Member.',
+        icon: 'warning',
+        confirmButtonText: 'OK'
+      });
+    } else {
+      // User is logged in, navigate to the Library page
+      navigate('/payment');
+    }
+  };
+
   return (
     <div className="u-header">
       <div className="u-top-bar">
@@ -83,6 +99,7 @@ const Header = ({ onSearch }) => {
         </div>
         <div className="u-nav-links">
           <a href="#" onClick={handleLibraryClick}>Library</a>
+          <a href="#"onClick={handleVIPClick}>VIP Member👑</a>
           {username ? (
             <div className="abc-button" onClick={toggleDropdown}>
               {username}
