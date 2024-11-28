@@ -25,37 +25,51 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Kiểm tra nếu có trường nào bỏ trống
     if (!createForm.username || !createForm.email || !createForm.password || !createForm.confirmPassword) {
       setMessage("Please fill in all fields.");
       return;
     }
-
+  
+    // Kiểm tra độ dài mật khẩu
+    if (createForm.password.length < 8) {
+      setMessage("Password must be at least 8 characters long.");
+      return;
+    }
+  
     // Kiểm tra confirm password
     if (createForm.password !== createForm.confirmPassword) {
       setMessage("Passwords do not match. Please try again.");
       return;
     }
-
+  
     try {
       const response = await axios.post("http://localhost:3001/register", {
         username: createForm.username,
         password: createForm.password,
         email: createForm.email,
       });
-      console.log('Account created:', response.data);
+  
+      console.log("Account created:", response.data);
       setMessage("Registration successful! Redirecting to login page...");
-      
+  
       // Chuyển hướng về trang đăng nhập sau khi đăng ký thành công
       setTimeout(() => {
         navigate("/login");
       }, 2000);
     } catch (error) {
-      console.error('Error registering account:', error);
-      setMessage("Registration failed. Please try again.");
+      console.error("Error registering account:", error);
+  
+      // Kiểm tra nếu lỗi có phản hồi từ backend
+      if (error.response && error.response.data && error.response.data.message) {
+        setMessage(error.response.data.message); // Hiển thị thông báo lỗi từ backend
+      } else {
+        setMessage("Registration failed. Please try again."); // Thông báo lỗi mặc định nếu không có phản hồi từ backend
+      }
     }
   };
+  
 
   // Toggle password visibility
   const togglePasswordVisibility = () => {
@@ -118,6 +132,11 @@ function Register() {
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
+                {createForm.password.length > 0 && createForm.password.length < 8 && (
+                  <div className="password-length-warning">
+                    Password must be at least 8 characters.
+                  </div>
+                )}
               </div>
               <div className="regis-form-group">
                 <label>CONFIRM PASSWORD</label>
@@ -143,7 +162,13 @@ function Register() {
                   </div>
                 )}
               </div>
-              <button type="submit" className="register-button">REGISTER</button>
+              <button 
+                type="submit" 
+                className="register-button"
+                disabled={createForm.password.length < 8} // Disable nếu mật khẩu < 8 ký tự
+              >
+                REGISTER
+              </button>
             </form>
             {message && <p className="register-message">{message}</p>}
             <p className="login-text">
