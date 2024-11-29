@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const categroySchema = new mongoose.Schema({
     name: String,
     description: String,
-    stories: [String]
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Story' }]
 }, { versionKey: false }
 );
 

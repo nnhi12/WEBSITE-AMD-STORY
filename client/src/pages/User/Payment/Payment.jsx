@@ -79,10 +79,10 @@ const PaymentPage = () => {
                 <div className="payment-left">
                     <h2 className="payment-title">Trở thành Thành viên VIP</h2>
                     <p className="payment-description">
-                        Chỉ với 49,000 VND bạn sẽ nhận được rất nhiều quyền lợi đặc biệt, từ ưu đãi hấp dẫn đến dịch vụ hỗ trợ nhanh chóng.
+                        Chỉ với 199,000 VND bạn sẽ nhận được rất nhiều quyền lợi đặc biệt, từ ưu đãi hấp dẫn đến dịch vụ hỗ trợ nhanh chóng.
                     </p>
                     <div className="price-box">
-                        <p className="price"><span>49,000 VND</span></p>
+                        <p className="price"><span>199,000 VND</span></p>
                     </div>
                 </div>
                 <div className="payment-right">
@@ -92,7 +92,7 @@ const PaymentPage = () => {
                     ) : (
                         sdkReady ? (
                             <PayPalButton
-                                amount="1.93"
+                                amount="7.85"
                                 onSuccess={onSuccessPaypal}
                                 onError={() => {
                                     Swal.fire({

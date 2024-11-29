@@ -95,12 +95,20 @@ const StoryInfo = () => {
         <div className="u-story-name">
           <h1 className="u-page-title">{story.name}</h1>
           <h4 className="u-author">
-            {/* {story.authors && story.authors.length > 0 ? story.authors.map(author => author.name).join(', ') : 'Unknown Author'} */}
+            {story.author ? (
+              <>
+                <p>{story.author}</p>
+              </>
+            ) : (
+              'Unknown Author'
+            )}
           </h4>
         </div>
         <div className="u-date-info">
           <p>Created at: {new Date(story.created_at).toLocaleString()}</p>
           <p>Updated at: {new Date(story.updated_at).toLocaleString()}</p>
+          <p>Trạng thái: {story.status ? 'Đã hoàn thành' : 'Chưa hoàn thành'}</p>
+
         </div>
         <h3>Summary</h3>
         <p>{story.description}</p>

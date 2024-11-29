@@ -3,7 +3,7 @@ const connectDB = require('./utils/connect.js');
 const cors = require('cors');
 const multer = require("multer");
 const storyModel = require('./models/Story.js')
-
+const authorModel = require('./models/Author.js');
 const accountModel = require('./models/Account.js');
 const { redirect } = require('react-router-dom');
 const userModel = require('./models/User.js');
@@ -92,7 +92,7 @@ app.post("/register", async (req, res) => {
             username,
             password,
             role: 'user',
-            status: true,
+            status: false,
         });
 
         const user = await userModel.create({
@@ -181,9 +181,13 @@ app.get('/stories/:storyId', async (req, res) => {
         if (!story) {
             return res.status(404).send('Story not found');
         }
+
+        const author = await authorModel.findOne({ stories: story._id });
+
         const modifiedStory = {
             ...story._doc,
             image: story.image ? story.image.toString('base64') : null,
+            author: author ? author.name : null
         };
         res.json(modifiedStory);
     } catch (err) {
