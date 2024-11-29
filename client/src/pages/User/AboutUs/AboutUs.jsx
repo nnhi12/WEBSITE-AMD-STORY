@@ -47,7 +47,7 @@ const AboutUs = () => {
             <ul>
               <li>Đăng nhập vào tài khoản của bạn hoặc tạo tài khoản mới nếu chưa có.</li>
               <li>Truy cập vào trang "Thành viên VIP" ở đầu trang.</li>
-              <li>Tiến hành nạp tiền bằng Paypal chỉ với 49.000 vnd là bạn đã có thể trở thành VIP và đọc bất cứ truyện nào mà bạn muốn.</li>
+              <li>Tiến hành nạp tiền bằng Paypal chỉ với 199.000 vnd là bạn đã có thể trở thành VIP và đọc bất cứ truyện nào mà bạn muốn.</li>
             </ul>
             Sau khi đăng ký, bạn sẽ có quyền truy cập vào các truyện mới nhất, bản quyền đặc biệt và các tính năng độc quyền khác.
             Cảm ơn các độc giả thân yêu.
