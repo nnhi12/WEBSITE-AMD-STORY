@@ -4,6 +4,11 @@ import Book from './book';
 
 const ListHost = ({ showChapters }) => {
     const [books, setBooks] = useState([]);
+    const [userId, setUserId] = useState(null);
+    useEffect(() => {
+        const storedUserId = localStorage.getItem("accountId");
+        setUserId(storedUserId);
+    }, []);
 
     useEffect(() => {
         // Fetch data from the API
@@ -25,7 +30,7 @@ const ListHost = ({ showChapters }) => {
         <div className="container my-5">
             <div className="row row-cols-4">
                 {books.map((book, index) => (
-                    <Book key={index} data={book} showChapters={showChapters} />
+                    <Book key={index} data={book} userId = {userId} showChapters={showChapters}  disabled = {book.disabled}/>
                 ))}
             </div>
         </div>

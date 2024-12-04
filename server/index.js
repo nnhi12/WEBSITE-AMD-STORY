@@ -41,6 +41,8 @@ app.get('/', async (req, res) => {
     }
 });
 
+
+//API ĐĂNG NHẬP
 app.post("/login", async (req, res) => {
     // Lấy tên đăng nhập và mật khẩu từ yêu cầu
     const { username, password } = req.body;
@@ -119,7 +121,10 @@ app.get("/stories", async (req, res) => {
         if (minChapters) filter.chapterCount = { $gte: parseInt(minChapters) };
         if (maxChapters) filter.chapterCount = { ...filter.chapterCount, $lte: parseInt(maxChapters) };
 
-        // Tính số lượng chapters
+        // Lấy ngày hiện tại
+        const currentDate = new Date();
+
+        // Tính số lượng chapters và kiểm tra ngày đóng của truyện
         const stories = await storyModel.aggregate([
             {
                 $lookup: {
@@ -131,7 +136,14 @@ app.get("/stories", async (req, res) => {
             },
             {
                 $addFields: {
-                    chapterCount: { $size: '$chapterDetails' } // Thêm trường chapterCount
+                    chapterCount: { $size: '$chapterDetails' }, // Thêm trường chapterCount
+                    disabled: {
+                        $cond: {
+                            if: { $eq: ['$date_closed', null] }, // Kiểm tra nếu date_closed là null
+                            then: false, // Nếu null, không disabled
+                            else: { $gte: [currentDate, '$date_closed'] } // Nếu không null, so sánh với ngày hiện tại
+                        }
+                    } // Kiểm tra ngày đóng truyện
                 }
             },
             {
@@ -153,13 +165,18 @@ app.get("/stories", async (req, res) => {
 });
 
 
+
 app.get("/searchstory", async (req, res) => {
     const query = req.query.name; // Lấy từ khóa tìm kiếm từ query string
 
     try {
         // Tìm kiếm các truyện có tên chứa từ khóa tìm kiếm, không phân biệt chữ hoa, chữ thường
         const stories = await storyModel.find({
-            name: { $regex: query, $options: 'i' }
+            name: { $regex: query, $options: 'i' },
+            $or: [
+                { date_closed: { $gt: new Date() } }, // Kiểm tra nếu date_closed lớn hơn hoặc bằng ngày hiện tại
+                { date_closed: { $eq: null } } // Kiểm tra nếu date_closed là null
+            ]
         });
 
         const modifiedStories = stories.map(story => ({
@@ -403,15 +420,18 @@ app.get('/categories', async (req, res) => {
     }
 });
 
-//chapter
-
-
 
 //the loai
 app.get('/categories/:categoryId/stories', async (req, res) => {
     try {
         const categoryId = req.params.categoryId;
-        const stories = await storyModel.find({ categories: categoryId });
+        const stories = await storyModel.find({
+            categories: categoryId,
+            $or: [
+                { date_closed: { $gt: new Date() } }, // Kiểm tra nếu date_closed lớn hơn hoặc bằng ngày hiện tại
+                { date_closed: { $eq: null } } // Kiểm tra nếu date_closed là null
+            ]
+        });
         const modifiedStories = stories.map(story => ({
             ...story._doc,
             image: story.image ? story.image.toString('base64') : null,
@@ -436,7 +456,7 @@ app.get('/users/:accountId/followingstories', async (req, res) => {
             return res.status(404).json({ message: "Account not found" });
         }
 
-        // Tìm user và populate các truyện đọc cùng chapters
+        // Tìm user và populate các truyện đang theo dõi cùng chapters
         const user = await userModel.findOne({ account: accountId }).populate({
             path: 'story_following',
             populate: { path: 'chapters', select: 'name' } // Lấy tên chapter
@@ -446,8 +466,13 @@ app.get('/users/:accountId/followingstories', async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Chuẩn bị dữ liệu để gửi về frontend
-        const readStories = user.story_following.map(story => ({
+        // Lọc các truyện đã hết hạn
+        const currentDate = new Date();
+        const followingStories = user.story_following.filter(story => {
+            if (!story.date_closed) return true; // Truyện không có ngày đóng
+            const endDate = new Date(story.date_closed);
+            return endDate > currentDate; // Nếu ngày đóng >= ngày hiện tại, truyện còn mở
+        }).map(story => ({
             ...story.toObject(),
             image: story.image ? story.image.toString('base64') : null, // Convert ảnh sang base64
             chapters: story.chapters.map(chapter => ({
@@ -456,12 +481,13 @@ app.get('/users/:accountId/followingstories', async (req, res) => {
             }))
         }));
 
-        res.json(readStories);
+        res.json(followingStories);
     } catch (err) {
         console.error('Error fetching followed stories:', err.message);
         res.status(500).send(`Server error: ${err.message}`);
     }
 });
+
 
 app.get('/users/:accountId/readingstories', async (req, res) => {
     try {
@@ -483,8 +509,12 @@ app.get('/users/:accountId/readingstories', async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Chuẩn bị dữ liệu để gửi về frontend
-        const readStories = user.story_reading.map(story => ({
+        const currentDate = new Date();
+        const readStories = user.story_reading.filter(story => {
+            if (!story.date_closed) return true; // Truyện không có ngày đóng
+            const endDate = new Date(story.date_closed);
+            return endDate >= currentDate; // Nếu ngày đóng >= ngày hiện tại, truyện còn mở
+        }).map(story => ({
             ...story.toObject(),
             image: story.image ? story.image.toString('base64') : null, // Convert ảnh sang base64
             chapters: story.chapters.map(chapter => ({
@@ -633,6 +663,16 @@ app.post("/reset-password", async (req, res) => {
 //first
 app.get('/stories/:storyId/first', async (req, res) => {
     try {
+        const { accountId } = req.query;
+
+        let account = null;
+        if (accountId) {
+            account = await accountModel.findById(accountId);
+            if (!account) {
+                return res.status(404).json({ message: "Account not found" });
+            }
+        }
+
         const story = await storyModel.findById(req.params.storyId).populate('chapters');
 
         if (!story) {
@@ -643,13 +683,30 @@ app.get('/stories/:storyId/first', async (req, res) => {
             return res.status(404).send('No chapters found for this story');
         }
 
-        // Ensure chapters are populated correctly
         const firstChapter = story.chapters[0];
         if (!firstChapter) {
             return res.status(404).send('First chapter not found');
         }
 
-        res.json(firstChapter);
+        let enableChapter = false;
+        if (!account && firstChapter.status === false) {
+            enableChapter = true; // Disabled if account._id is null
+        } else if (!account && firstChapter.status === true) {
+            enableChapter = false; // Both account and chapter are disabled
+        } else if (account.status === false && firstChapter.status === false) {
+            enableChapter = true; // Both account and chapter are disabled
+        } else if (account.status === true && firstChapter.status === false) {
+            enableChapter = true; // Account enabled, chapter disabled
+        } else if (account.status === false && firstChapter.status === true) {
+            enableChapter = false; // Account disabled, chapter enabled
+        } else if (account.status === true && firstChapter.status === true) {
+            enableChapter = true; // Both account and chapter are enabled
+        }
+
+        res.json({
+            firstChapter: firstChapter,
+            enableChapter: enableChapter
+        });
     } catch (err) {
         console.error('Error fetching first chapter:', err);
         res.status(500).send('Server error');
@@ -657,14 +714,53 @@ app.get('/stories/:storyId/first', async (req, res) => {
 });
 
 
+
 app.get('/stories/:storyId/latest', async (req, res) => {
     try {
-        const story = await storyModel.findById(req.params.storyId).populate('chapters');
-        if (!story || story.chapters.length === 0) {
-            return res.status(404).send('No chapters found');
+        const { accountId } = req.query;
+
+        let account = null;
+        if (accountId) {
+            account = await accountModel.findById(accountId);
+            if (!account) {
+                return res.status(404).json({ message: "Account not found" });
+            }
         }
-        const latestChapter = story.chapters[story.chapters.length - 1]; // Lấy chương cuối
-        res.json(latestChapter);
+
+        const story = await storyModel.findById(req.params.storyId).populate('chapters');
+
+        if (!story) {
+            return res.status(404).send('Story not found');
+        }
+
+        if (!story.chapters || story.chapters.length === 0) {
+            return res.status(404).send('No chapters found for this story');
+        }
+
+        const latestChapter = story.chapters[story.chapters.length - 1];
+        if (!latestChapter) {
+            return res.status(404).send('Latest chapter not found');
+        }
+
+        let enableChapter = false;
+        if (!account && latestChapter.status === false) {
+            enableChapter = true; // Disabled if account._id is null
+        } else if (!account && latestChapter.status === true) {
+            enableChapter = false; // Both account and chapter are disabled
+        } else if (account.status === false && latestChapter.status === false) {
+            enableChapter = true; // Both account and chapter are disabled
+        } else if (account.status === true && latestChapter.status === false) {
+            enableChapter = true; // Account enabled, chapter disabled
+        } else if (account.status === false && latestChapter.status === true) {
+            enableChapter = false; // Account disabled, chapter enabled
+        } else if (account.status === true && latestChapter.status === true) {
+            enableChapter = true; // Both account and chapter are enabled
+        }
+
+        res.json({
+            latestChapter: latestChapter,
+            enableChapter: enableChapter
+        });
     } catch (err) {
         console.error('Error fetching latest chapter:', err);
         res.status(500).send('Server error');
@@ -692,6 +788,7 @@ app.get('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) =
     }
 });
 
+
 app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) => {
     try {
         const { accountId, storyId } = req.params;
@@ -706,9 +803,9 @@ app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) =
         // Tìm người dùng từ tài khoản
         const user = await userModel.findOne({ account: accountId });
 
-        // Kiểm tra xem storyId có trong danh sách story_reading của người dùng không
+        // Nếu storyId không có trong danh sách story_reading của người dùng, dừng không thực hiện PUT
         if (!user.story_reading.includes(storyId)) {
-            return res.status(400).json({ message: "Story is not in the reading list" });
+            return res.status(200).json({ message: "Story is not in the reading list, no update performed" });
         }
 
         // Cập nhật hoặc thêm mới record trong readingchapterModel
@@ -725,7 +822,8 @@ app.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res) =
     }
 });
 
-////thanh tiến trình chưa done
+
+////thanh tiến trình
 app.get('/users/:accountId/get-reading-progress', async (req, res) => {
     const { accountId } = req.params;
     try {
@@ -815,7 +913,7 @@ app.put('/chapters/:chapterId/increment-view', async (req, res) => {
 //dang ky vip
 app.post('/update-status', async (req, res) => {
     const accountId = req.body.accountId; // Lấy ID tài khoản từ body request
-    
+
     try {
         // Tìm tài khoản theo ID
         const account = await accountModel.findById(accountId);
@@ -824,17 +922,31 @@ app.post('/update-status', async (req, res) => {
             return res.status(404).json({ message: 'Tài khoản không tồn tại.' });
         }
 
-        const oldStatus = account.status;
         // Cập nhật status
         const updatedStatus = !account.status; // Đổi trạng thái
         account.status = updatedStatus;
+
+        // Cập nhật start_date và end_date nếu tài khoản VIP được kích hoạt
+        const currentDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(currentDate.getDate() + 30);
+        if (updatedStatus) {
+            account.start_date = currentDate; // Ngày bắt đầu là ngày hiện tại
+            account.end_date = endDate; // Ngày kết thúc là 30 ngày sau
+        } else {
+            // Nếu hủy VIP, có thể reset ngày (hoặc giữ nguyên tùy theo logic của bạn)
+            account.start_date = null;
+            account.end_date = null;
+        }
 
         // Lưu thay đổi
         await account.save();
 
         return res.status(200).json({
             message: `Trạng thái tài khoản đã được cập nhật thành công.`,
-            newStatus: updatedStatus
+            newStatus: updatedStatus,
+            startDate: account.start_date,
+            endDate: account.end_date
         });
     } catch (error) {
         console.error('Lỗi khi cập nhật trạng thái:', error);
@@ -843,9 +955,10 @@ app.post('/update-status', async (req, res) => {
 });
 
 
+
 app.get('/account-status', async (req, res) => {
     const accountId = req.query.accountId; // Lấy ID tài khoản từ query params
-    
+
     try {
         // Tìm tài khoản theo ID
         const account = await accountModel.findById(accountId);
@@ -863,6 +976,38 @@ app.get('/account-status', async (req, res) => {
     }
 });
 
+//check thoi gian VIP cua tai khoan
+app.post('/check-status', async (req, res) => {
+    const { accountId } = req.body; // Lấy accountId từ body request
+
+    try {
+        const account = await accountModel.findById(accountId);
+
+        if (!account) {
+            return res.status(404).json({ message: 'Tài khoản không tồn tại.' });
+        }
+
+        const currentDate = new Date();
+
+        // Kiểm tra và cập nhật trạng thái tài khoản nếu hết hạn
+        if (account.end_date && currentDate >= account.end_date) {
+            account.status = false;
+            account.start_date = null;
+            account.end_date = null;
+            await account.save();
+        }
+
+        res.status(200).json({
+            message: 'Kiểm tra trạng thái tài khoản thành công.',
+            status: account.status,
+            startDate: account.start_date,
+            endDate: account.end_date
+        });
+    } catch (error) {
+        console.error('Lỗi khi kiểm tra trạng thái:', error);
+        res.status(500).json({ message: 'Đã xảy ra lỗi khi kiểm tra trạng thái tài khoản.' });
+    }
+});
 
 app.listen(3001, () => {
     console.log('Success!');

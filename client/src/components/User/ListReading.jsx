@@ -26,7 +26,7 @@ const ListReading = ({ showChapters }) => {
         <div className="container my-5">
             <div className="row row-cols-4">
                 {books.map((book, index) => (
-                    <Book key={index} data={book} userId = {userId} showChapters={showChapters} />
+                    <Book key={index} data={book} userId = {userId} showChapters={showChapters} disabled = {book.disabled}/>
                 ))}
             </div>
         </div>

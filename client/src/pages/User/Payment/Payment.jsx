@@ -15,18 +15,25 @@ const PaymentPage = () => {
 
     useEffect(() => {
         const storedUserId = localStorage.getItem("accountId");
+        console.log("Lấy userId từ localStorage:", storedUserId);
         setUserId(storedUserId);
     }, []);
 
     useEffect(() => {
-        axios.get(`http://localhost:3001/account-status?accountId=${userId}`)
-            .then(response => {
-                setOldStatus(response.data.status); // Gán trạng thái cũ
-            })
-            .catch(error => {
-                console.error("Lỗi khi lấy trạng thái tài khoản:", error);
-            });
+        console.log("userId đã được set:", userId);
+        if (userId) { // Chỉ gọi API nếu userId không phải null
+            axios.get(`http://localhost:3001/account-status?accountId=${userId}`)
+                .then(response => {
+                    setOldStatus(response.data.status); // Gán trạng thái cũ
+                })
+                .catch(error => {
+                    console.error("Lỗi khi lấy trạng thái tài khoản:", error);
+                });
+        } else {
+            console.warn("userId là null. Không thể lấy trạng thái tài khoản.");
+        }
     }, [userId]);
+    
 
     const addPaypalScripts = async () => {
         if (!window.paypal) {
@@ -50,7 +57,7 @@ const PaymentPage = () => {
             Swal.fire({
                 icon: 'success',
                 title: 'Thanh toán thành công!',
-                text: response.data.message,
+                text: `VIP đã kích hoạt từ ${response.data.startDate} đến ${response.data.endDate}`,
                 confirmButtonText: 'OK',
             });
 
@@ -79,10 +86,10 @@ const PaymentPage = () => {
                 <div className="payment-left">
                     <h2 className="payment-title">Trở thành Thành viên VIP</h2>
                     <p className="payment-description">
-                        Chỉ với 199,000 VND bạn sẽ nhận được rất nhiều quyền lợi đặc biệt, từ ưu đãi hấp dẫn đến dịch vụ hỗ trợ nhanh chóng.
+                        Chỉ với 99,000 VND bạn sẽ nhận được 1 tháng đọc truyện không giới hạn trên trang web.
                     </p>
                     <div className="price-box">
-                        <p className="price"><span>199,000 VND</span></p>
+                        <p className="price"><span>99,000 VND</span></p>
                     </div>
                 </div>
                 <div className="payment-right">
@@ -92,7 +99,7 @@ const PaymentPage = () => {
                     ) : (
                         sdkReady ? (
                             <PayPalButton
-                                amount="7.85"
+                                amount="3.9"
                                 onSuccess={onSuccessPaypal}
                                 onError={() => {
                                     Swal.fire({

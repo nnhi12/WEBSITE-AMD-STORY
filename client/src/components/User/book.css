@@ -66,3 +66,25 @@
     transition: width 0.3s ease;
   }
   
+  .custom-context-menu .disabled {
+    color: gray;
+    pointer-events: none; /* Ngừng tương tác với mục này */
+}
+
+.disabled-link {
+  pointer-events: none; /* Ngừng tương tác với liên kết */
+  color: gray; /* Tạo màu xám cho các phần tử bị vô hiệu hóa */
+}
+
+.disabled-text {
+  color: gray; /* Tạo màu xám cho tên truyện */
+}
+
+.disabled-image {
+  opacity: 0.5; /* Giảm độ mờ của hình ảnh để làm rõ rằng nó bị vô hiệu hóa */
+}
+
+.disabled {
+  pointer-events: none; /* Ngừng tương tác với các mục trong context menu */
+  color: gray; /* Tạo màu xám cho các mục bị vô hiệu hóa trong menu */
+}
