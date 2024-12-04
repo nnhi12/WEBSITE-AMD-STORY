@@ -11,7 +11,10 @@ const storySchema = new mongoose.Schema({
     chapters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chapter' }],
     categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
     user_reading: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    user_follow: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    user_follow: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    date_opened: Date,
+    date_closed: Date,
+    fee: Number
 }, { versionKey: false }
 );
 

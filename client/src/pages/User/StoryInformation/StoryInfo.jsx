@@ -9,7 +9,7 @@ const StoryInfo = () => {
   const [canContinueReading, setCanContinueReading] = useState(false);
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate(); // Hook điều hướng trong React Router
-  
+
   useEffect(() => {
     // Lấy userId từ localStorage
     const storedUserId = localStorage.getItem("accountId");
@@ -44,21 +44,35 @@ const StoryInfo = () => {
   }
 
   const handleReadFromStart = () => {
-    axios.get(`http://localhost:3001/stories/${storyId}/first`)
-      .then(response => {
-        if (response.data) {
-          navigate(`/stories/${storyId}/chapters/${response.data._id}`);
+    axios.get(`http://localhost:3001/stories/${storyId}/first?accountId=${userId || ''}`)
+    .then(response => {
+      if (response.data) {
+        const { firstChapter, enableChapter } = response.data;
+
+        // Only navigate if the chapter is enabled
+        if (enableChapter) {
+          navigate(`/stories/${storyId}/chapters/${firstChapter._id}`);
+        } else {
+          alert('You cannot read this chapter if you are not VIP.'); // Optional: show a message when disabled
         }
+      }
       })
       .catch(error => console.error('Error fetching first chapter:', error));
   };
 
   const handleReadLatest = () => {
-    axios.get(`http://localhost:3001/stories/${storyId}/latest`)
-      .then(response => {
-        if (response.data) {
-          navigate(`/stories/${storyId}/chapters/${response.data._id}`);
+    axios.get(`http://localhost:3001/stories/${storyId}/latest?accountId=${userId || ''}`)
+    .then(response => {
+      if (response.data) {
+        const { latestChapter, enableChapter } = response.data;
+
+        // Only navigate if the chapter is enabled
+        if (enableChapter) {
+          navigate(`/stories/${storyId}/chapters/${latestChapter._id}`);
+        } else {
+          alert('You cannot read this chapter if you are not VIP.'); // Optional: show a message when disabled
         }
+      }
       })
       .catch(error => console.error('Error fetching latest chapter:', error));
   };

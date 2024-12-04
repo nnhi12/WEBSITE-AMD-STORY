@@ -22,8 +22,20 @@ class Book extends Component {
   };
 
   handleOptionClick = (option) => {
-    const { data } = this.props;
+    const { data, disabled } = this.props;  // Nhận giá trị disabled từ props
     const userId = localStorage.getItem("accountId"); // Lấy accountId từ localStorage
+
+    // Kiểm tra nếu truyện bị vô hiệu hóa
+    if (disabled) {
+      Swal.fire({
+        title: 'Truyện đã đóng!',
+        text: 'Không thể thực hiện hành động này vì truyện đã đóng.',
+        icon: 'warning',
+        confirmButtonText: 'OK',
+      });
+      this.setState({ isContextMenuOpen: false }); // Đóng menu
+      return; // Ngừng xử lý nếu truyện đã đóng
+    }
 
     // Kiểm tra nếu chưa đăng nhập
     if (!userId) {
@@ -111,7 +123,7 @@ class Book extends Component {
   }
 
   render() {
-    const { data, showChapters } = this.props;
+    const { data, showChapters, disabled } = this.props;  // Nhận giá trị disabled từ props
     const { isContextMenuOpen, contextMenuPosition } = this.state;
     const imageSrc = data.image ? `data:image/jpeg;base64,${data.image}` : '';
 
@@ -120,9 +132,16 @@ class Book extends Component {
         className="col text-center mb-4"
         onContextMenu={this.handleContextMenu} // Bắt sự kiện chuột phải
       >
-        <Link to={`/storyinfo/${data._id}`} className="u-text-decoration-none u-text-dark">
-          <img src={imageSrc} alt={data.name} className="img-fluid u-book-image" />
-          <p className="u-book-title mt-2">{data.name}</p>
+        <Link 
+          to={`/storyinfo/${data._id}`} 
+          className={`u-text-decoration-none u-text-dark ${disabled ? 'disabled-link' : ''}`}
+        >
+          <img 
+            src={imageSrc} 
+            alt={data.name} 
+            className={`img-fluid u-book-image ${disabled ? 'disabled-image' : ''}`} 
+          />
+          <p className={`u-book-title mt-2 ${disabled ? 'disabled-text' : ''}`}>{data.name}</p>
         </Link>
         {showChapters && data.chapters && (
           <ul className="fav-chapter-list mt-2">
@@ -130,7 +149,7 @@ class Book extends Component {
               <li key={index}>
                 <Link
                   to={`/stories/${data._id}/chapters/${chapter}`}
-                  className="u-text-decoration-none"
+                  className={`u-text-decoration-none ${disabled ? 'disabled-link' : ''}`}
                 >
                   {chapter}
                 </Link>
@@ -145,8 +164,10 @@ class Book extends Component {
             className="custom-context-menu"
             style={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}
           >
-            <div onClick={() => this.handleOptionClick('follow')}>Theo dõi</div>
-            <div onClick={() => this.handleOptionClick('addToList')}>Thêm vào danh sách đọc</div>
+            <div onClick={() => this.handleOptionClick('follow')} 
+                 className={disabled ? 'disabled' : ''}>Theo dõi</div>
+            <div onClick={() => this.handleOptionClick('addToList')} 
+                 className={disabled ? 'disabled' : ''}>Thêm vào danh sách đọc</div>
           </div>
         )}
       </div>

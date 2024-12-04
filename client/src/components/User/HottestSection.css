@@ -54,3 +54,14 @@
   cursor: pointer;
   width: 100%;
 }
+
+.disabled {
+  opacity: 0.5; /* Làm mờ truyện đã hết hạn */
+  text-decoration: line-through; /* Gạch ngang tiêu đề truyện đã hết hạn */
+}
+
+.expired-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+}
