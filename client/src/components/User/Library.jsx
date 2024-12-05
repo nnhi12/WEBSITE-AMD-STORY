@@ -39,7 +39,6 @@ const ListReading = ({ userId, showChapters }) => {
           <Book 
             key={index} 
             data={book} 
-            userId={userId} 
             showChapters={showChapters} 
             onBookRemoved={handleBookRemoved} 
             progressList={progressList} // Truyền progressList xuống component Book
