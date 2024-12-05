@@ -315,7 +315,8 @@ app.get('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
 
         const comments = chapter.comments;
         const commentsWithUserInfo = await Promise.all(comments.map(async (comment) => {
-            const user = await userModel.findOne({ comments: comment._id }); // Tìm người dùng theo userId trong bình luận
+            const user = await userModel.findOne({ comments: comment._id });
+            const account = await accountModel.findOne({ _id: user.account }); // Tìm người dùng theo userId trong bình luận
             if (user) {
                 // Convert image Buffer to base64 (nếu có hình ảnh)
                 const imageBase64 = user.image ? `data:image/jpeg;base64,${user.image.toString('base64')}` : null;
@@ -324,8 +325,8 @@ app.get('/stories/:storyId/chapters/:chapterId/comments', async (req, res) => {
                     content: comment.content,
                     message: comment.message,
                     created_at: comment.created_at,
-                    user: {
-                        username: user.fullname, // Lấy username
+                    user: { // Lấy username
+                        username: account.username,
                         image: imageBase64,      // Lấy hình ảnh (nếu có)
                     }
                 };

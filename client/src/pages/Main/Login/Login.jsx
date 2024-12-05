@@ -32,7 +32,6 @@ function Login() {
         // Lưu thông tin vào localStorage
         localStorage.setItem('accountId', account._id); // Lưu ID tài khoản
         localStorage.setItem('username', account.username); // Lưu tên đăng nhập
-        localStorage.setItem('userId', user._id); // Lưu ID người dùng
         history("/");
       } else {
         setErrorMessage("Username or password is incorrect");

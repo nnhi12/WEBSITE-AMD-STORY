@@ -25,6 +25,10 @@ const CommentSection = () => {
             });
     }, [chapterId, storyId]);
     const handleCommentSubmit = () => {
+        if (newComment.trim() === '') {
+            // Nếu không có nội dung bình luận, không làm gì
+            return;
+        }
         axios.post(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}/comments`, {
           content: newComment,
           accountId: userId,
